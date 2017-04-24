@@ -88,5 +88,7 @@ func main () {
         c <- path
         return nil
     }
+    fmt.Println("These repositories need some attention:")
     filepath.Walk(".", walkHandler)
+    fmt.Println("Done!")
 }
