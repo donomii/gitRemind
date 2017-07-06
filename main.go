@@ -62,7 +62,9 @@ func quickCommand (cmd *exec.Cmd) string{
 
 func worker (c chan string) {
     var ahead_regex = regexp.MustCompile(`Your branch is ahead of`)
+    var not_staged_regex = regexp.MustCompile(`Changes not staged for commit:`)
     var modified_regex = regexp.MustCompile(`modified:`)
+    var untracked_regex = regexp.MustCompile(`Untracked files:`)
 
         cwd, _ := os.Getwd()
         for path := range c {
@@ -71,7 +73,7 @@ func worker (c chan string) {
                 os.Chdir(path)
                 cmd := exec.Command("git", "status")
                 result := quickCommand(cmd)
-                if ahead_regex.MatchString(result) || modified_regex.MatchString(result){
+                if ahead_regex.MatchString(result) || modified_regex.MatchString(result) || not_staged_regex.MatchString(result) || untracked_regex.MatchString(result) {
                     fmt.Println(path)
                     //fmt.Println(result)
                     //fmt.Printf("\n\n\n\n\n")
