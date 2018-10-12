@@ -21,6 +21,7 @@ var ui bool
 var repos [][]string
 var lastSelect  string
 var app *tview.Application
+var workerChan chan string
 
 func hash_file_md5(filePath string) (string, error) {
     //Initialize variable returnMD5String now in case an error has to be returned
@@ -186,6 +187,7 @@ func doui() {
 				app.Stop()
 				doQCI([]string{"git", "commit", v[0]})
 				doQCI([]string{"git", "push"})
+				scanRepos(workerChan)
 				app.Run()
 			}
 			textView.SetText(repos[ii][2])
@@ -233,21 +235,24 @@ func doui() {
 	}
 }
 
-
-func main () {
-    flag.BoolVar(&autoSync, "auto-sync", false, "Automatically push then pull on clean repositories")
-    flag.BoolVar(&ui, "ui", false, "Experimental graphical user interface")
-    flag.Parse()
-    c := make(chan string)
-    go worker (c)
-
-
+func scanRepos(c chan string) {
     walkHandler := func (path string, info os.FileInfo, err error) error {
         c <- path
         return nil
     }
     fmt.Println("These repositories need some attention:")
     filepath.Walk(".", walkHandler)
+}
+
+func main () {
+    flag.BoolVar(&autoSync, "auto-sync", false, "Automatically push then pull on clean repositories")
+    flag.BoolVar(&ui, "ui", false, "Experimental graphical user interface")
+    flag.Parse()
+    
+	workerChan = make(chan string)
+    go worker (workerChan)
+	scanRepos(workerChan)
+	
     if ui { doui() }
     fmt.Println("Done!")
 }
