@@ -19,6 +19,9 @@ import (
 var autoSync bool
 var ui bool
 var repos [][]string
+var lastSelect  string
+var app *tview.Application
+
 func hash_file_md5(filePath string) (string, error) {
     //Initialize variable returnMD5String now in case an error has to be returned
     var returnMD5String string
@@ -65,6 +68,16 @@ func quickCommand (cmd *exec.Cmd) string{
 }
 
 
+func quickCommandInteractive (cmd *exec.Cmd) {
+    
+    cmd.Stdin = os.Stdin
+    
+    cmd.Stdout = os.Stdout
+    
+    cmd.Stderr = os.Stderr
+    cmd.Run()
+}
+
 func worker (c chan string) {
     var ahead_regex = regexp.MustCompile(`Your branch is ahead of`)
     var not_staged_regex = regexp.MustCompile(`Changes not staged for commit:`)
@@ -78,9 +91,13 @@ func worker (c chan string) {
                 os.Chdir(path)
                 cmd := exec.Command("git", "status")
                 result := quickCommand(cmd)
+				cmd = exec.Command("git", "status", "--porcelain")
+                shortresult := quickCommand(cmd)
+				cmd = exec.Command("git", "diff", "-p")
+                diffresult := quickCommand(cmd)
                 if ahead_regex.MatchString(result) || modified_regex.MatchString(result) || not_staged_regex.MatchString(result) || untracked_regex.MatchString(result) {
                     fmt.Println(path)
-                    repos = append(repos, []string{path, result})
+                    repos = append(repos, []string{path, shortresult, grep(diffresult)})
                     //fmt.Println(result)
                     //fmt.Printf("\n\n\n\n\n")
                 }
@@ -95,10 +112,21 @@ func worker (c chan string) {
         }
 }
 
+func grep (str string) string {
+	var out string
+	strs := strings.Split(str, "\n")
+	for _, v := range strs {
+		if strings.Index( v, "+  ") > -1 || strings.Index( v, "-  ") > -1  {
+			out = out + v + "\n"
+		}
+	}	
+	return out
+}
+
 func doui() {
     //box := tview.NewBox().SetBorder(true).SetTitle("Hello, world!")
-    app := tview.NewApplication()
-    	       	textView := tview.NewTextView().
+    app = tview.NewApplication()
+    	textView := tview.NewTextView().
 		SetDynamicColors(true).
 		SetRegions(true).
 		SetWordWrap(true).
@@ -106,22 +134,44 @@ func doui() {
 			app.Draw()
 		})
         textView.SetText( "lalalala")
-list := tview.NewList()
+		
+		textView2 := tview.NewTextView().
+		SetDynamicColors(true).
+		SetRegions(true).
+		SetWordWrap(true).
+		SetChangedFunc(func() {
+			app.Draw()
+		})
+        textView2.SetText( "lalalala")
+		
+		
+	list := tview.NewList()
         for i, v := range repos {
+			
             ii := i
-            list.AddItem(v[0], "Repository not in sync", 'a', func(){textView.SetText(repos[ii][1])})
+            list.AddItem(v[0], "Repository not in sync", 'a', func(){
+			if lastSelect == v[0] {
+				app.Stop()
+				cmd := exec.Command("git", "commit", v[0])
+                quickCommandInteractive(cmd)
+				app.Run()
+			}
+			textView.SetText(repos[ii][2])
+			textView2.SetText(repos[ii][1])
+			lastSelect = v[0]
+			})
         }
 		list.AddItem("Quit", "Press to exit", 'q', func() {
 			app.Stop()
 		})
 
-        	newPrimitive := func(text string) tview.Primitive {
-		return tview.NewTextView().
+        newPrimitive := func(text string) tview.Primitive {
+			return tview.NewTextView().
 			SetTextAlign(tview.AlignCenter).
 			SetText(text)
-	}
+		}
 
-        	menu := newPrimitive("Menu")
+        	//menu := newPrimitive("Menu")
             	//sideBar := newPrimitive("Side Bar")
 
     grid := tview.NewGrid().
@@ -129,7 +179,7 @@ list := tview.NewList()
 		SetColumns(30, 0, 30).
 		SetBorders(true).
 		AddItem(newPrimitive("Header"), 0, 0, 1, 3, 0, 0, false).
-		AddItem(textView, 2, 0, 1, 3, 0, 0, false)
+		AddItem(newPrimitive("Footer"), 2, 0, 1, 3, 0, 0, false)
 
         /*
         grid.AddItem(menu, 0, 0, 1, 3, 0, 0, false).
@@ -137,9 +187,9 @@ list := tview.NewList()
 		AddItem(sideBar, 0, 0, 1, 3, 0, 0, false)
         */
 
-        grid.AddItem(menu, 1, 0, 1, 1, 0, 100, false).
-		AddItem(list, 1, 1, 1, 1, 0, 100, true).
-		AddItem(textView, 1, 2, 1, 1, 0, 100, false)
+        grid.AddItem(list, 1, 0, 1, 1, 0, 100, true).
+		AddItem(textView, 1, 1, 1, 1, 0, 100, false).
+		AddItem(textView2, 1, 2, 1, 1, 0, 100, false)
         //left := flex.AddItem(tview.NewBox().SetBorder(true).SetTitle("Left (1/2 x width of Top)"), 0, 1, false)
         //row := tview.NewFlex().SetDirection(tview.FlexRow)
           //row = row.AddItem(list.SetBorder(true).SetTitle("Repos"), 0, 3, true)
