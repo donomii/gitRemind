@@ -179,14 +179,21 @@ func doui() {
 		}
 		
 	list := tview.NewList()
-        for i, v := range repos {
+        for i, vv := range repos {
 			
             ii := i
+			v := vv
             list.AddItem(v[0], v[3], 'a', func(){
+			
 			if lastSelect == v[0] {
 				app.Stop()
-				doQCI([]string{"git", "commit", v[0]})
+				        cwd, _ := os.Getwd()
+        
+				os.Chdir(v[0])
+				fmt.Printf("%v\n", []string{"git", "commit", "-a"})
+				doQCI([]string{"git", "commit", "-a"})
 				doQCI([]string{"git", "push"})
+				os.Chdir(cwd)
 				scanRepos(workerChan)
 				app.Run()
 			}
