@@ -184,6 +184,8 @@ func doui() {
 				app.Stop()
 				cmd := exec.Command("git", "commit", v[0])
                 quickCommandInteractive(cmd)
+				cmd = exec.Command("git", "push")
+                quickCommandInteractive(cmd)
 				app.Run()
 			}
 			textView.SetText(repos[ii][2])
