@@ -96,18 +96,22 @@ func worker (c chan string) {
 				cmd = exec.Command("git", "diff", "-p")
                 diffresult := quickCommand(cmd)
 				reasons := []string{}
+				longreasons := []string{}
                 if ahead_regex.MatchString(result) {
 					reasons = append(reasons, "!push")
+					longreasons = append(longreasons, "local commits not pushed")
 				}
 				if modified_regex.MatchString(result) || not_staged_regex.MatchString(result) {
 					reasons = append(reasons, "!commtd")
+					longreasons = append(longreasons, "changes not committed")
 				}				
 				if untracked_regex.MatchString(result) {
 					reasons = append(reasons, "!tracked")
+					longreasons = append(longreasons, "untracked files present")
 				}
 				if len(reasons)>0 {
                     fmt.Println(path)
-                    repos = append(repos, []string{path, shortresult, grep(diffresult), strings.Join(reasons, ", ")})
+                    repos = append(repos, []string{path, shortresult, grep(diffresult), strings.Join(reasons, ", "), strings.Join(longreasons, ", ")})
                     //fmt.Println(result)
                     //fmt.Printf("\n\n\n\n\n")
                 }
@@ -134,6 +138,8 @@ func grep (str string) string {
 }
 
 func doui() {
+
+        
     //box := tview.NewBox().SetBorder(true).SetTitle("Hello, world!")
     app = tview.NewApplication()
     	textView := tview.NewTextView().
@@ -154,6 +160,20 @@ func doui() {
 		})
         textView2.SetText( "lalalala")
 		
+		footer := tview.NewTextView().
+		SetDynamicColors(true).
+		SetRegions(true).
+		SetWordWrap(true).
+		SetChangedFunc(func() {
+			app.Draw()
+		})
+        footer.SetText( "lalalala")
+		
+		newPrimitive := func(text string) tview.Primitive {
+			return tview.NewTextView().
+			SetTextAlign(tview.AlignCenter).
+			SetText(text)
+		}
 		
 	list := tview.NewList()
         for i, v := range repos {
@@ -168,6 +188,7 @@ func doui() {
 			}
 			textView.SetText(repos[ii][2])
 			textView2.SetText(repos[ii][1])
+			footer.SetText(repos[ii][4])
 			lastSelect = v[0]
 			})
         }
@@ -175,11 +196,6 @@ func doui() {
 			app.Stop()
 		})
 
-        newPrimitive := func(text string) tview.Primitive {
-			return tview.NewTextView().
-			SetTextAlign(tview.AlignCenter).
-			SetText(text)
-		}
 
         	//menu := newPrimitive("Menu")
             	//sideBar := newPrimitive("Side Bar")
@@ -189,7 +205,7 @@ func doui() {
 		SetColumns(30, 0, 30).
 		SetBorders(true).
 		AddItem(newPrimitive("Header"), 0, 0, 1, 3, 0, 0, false).
-		AddItem(newPrimitive("Footer"), 2, 0, 1, 3, 0, 0, false)
+		AddItem(footer, 2, 0, 1, 3, 0, 0, false)
 
         /*
         grid.AddItem(menu, 0, 0, 1, 3, 0, 0, false).
