@@ -95,9 +95,19 @@ func worker (c chan string) {
                 shortresult := quickCommand(cmd)
 				cmd = exec.Command("git", "diff", "-p")
                 diffresult := quickCommand(cmd)
-                if ahead_regex.MatchString(result) || modified_regex.MatchString(result) || not_staged_regex.MatchString(result) || untracked_regex.MatchString(result) {
+				reasons := []string{}
+                if ahead_regex.MatchString(result) {
+					reasons = append(reasons, "!push")
+				}
+				if modified_regex.MatchString(result) || not_staged_regex.MatchString(result) {
+					reasons = append(reasons, "!commtd")
+				}				
+				if untracked_regex.MatchString(result) {
+					reasons = append(reasons, "!tracked")
+				}
+				if len(reasons)>0 {
                     fmt.Println(path)
-                    repos = append(repos, []string{path, shortresult, grep(diffresult)})
+                    repos = append(repos, []string{path, shortresult, grep(diffresult), strings.Join(reasons, ", ")})
                     //fmt.Println(result)
                     //fmt.Printf("\n\n\n\n\n")
                 }
@@ -149,7 +159,7 @@ func doui() {
         for i, v := range repos {
 			
             ii := i
-            list.AddItem(v[0], "Repository not in sync", 'a', func(){
+            list.AddItem(v[0], v[3], 'a', func(){
 			if lastSelect == v[0] {
 				app.Stop()
 				cmd := exec.Command("git", "commit", v[0])
