@@ -86,7 +86,7 @@ func worker (c chan string) {
     var not_staged_regex = regexp.MustCompile(`Changes not staged for commit:`)
     var modified_regex = regexp.MustCompile(`modified:`)
     var untracked_regex = regexp.MustCompile(`Untracked files:`)
-
+	repos = [][]string{}
         cwd, _ := os.Getwd()
         for path := range c {
             os.Chdir(cwd)
