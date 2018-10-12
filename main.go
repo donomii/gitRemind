@@ -1,6 +1,8 @@
 package main
 
 import (
+    "github.com/rivo/tview"
+    "flag"
     "regexp"
     "strings"
     "fmt"
@@ -14,6 +16,9 @@ import (
 )
 
 
+var autoSync bool
+var ui bool
+var repos [][]string
 func hash_file_md5(filePath string) (string, error) {
     //Initialize variable returnMD5String now in case an error has to be returned
     var returnMD5String string
@@ -75,16 +80,89 @@ func worker (c chan string) {
                 result := quickCommand(cmd)
                 if ahead_regex.MatchString(result) || modified_regex.MatchString(result) || not_staged_regex.MatchString(result) || untracked_regex.MatchString(result) {
                     fmt.Println(path)
+                    repos = append(repos, []string{path, result})
                     //fmt.Println(result)
                     //fmt.Printf("\n\n\n\n\n")
+                }
+                if autoSync  {
+                    fmt.Println("Syncing "+path)
+                    cmd := exec.Command("git", "push")
+                    quickCommand(cmd)
+                    cmd = exec.Command("git", "pull")
+                    quickCommand(cmd)
                 }
             }
         }
 }
 
+func doui() {
+    //box := tview.NewBox().SetBorder(true).SetTitle("Hello, world!")
+    app := tview.NewApplication()
+    	       	textView := tview.NewTextView().
+		SetDynamicColors(true).
+		SetRegions(true).
+		SetWordWrap(true).
+		SetChangedFunc(func() {
+			app.Draw()
+		})
+        textView.SetText( "lalalala")
+list := tview.NewList()
+        for i, v := range repos {
+            ii := i
+            list.AddItem(v[0], "Repository not in sync", 'a', func(){textView.SetText(repos[ii][1])})
+        }
+		list.AddItem("Quit", "Press to exit", 'q', func() {
+			app.Stop()
+		})
+
+        	newPrimitive := func(text string) tview.Primitive {
+		return tview.NewTextView().
+			SetTextAlign(tview.AlignCenter).
+			SetText(text)
+	}
+
+        	menu := newPrimitive("Menu")
+            	//sideBar := newPrimitive("Side Bar")
+
+    grid := tview.NewGrid().
+		SetRows(3, 0, 3).
+		SetColumns(30, 0, 30).
+		SetBorders(true).
+		AddItem(newPrimitive("Header"), 0, 0, 1, 3, 0, 0, false).
+		AddItem(textView, 2, 0, 1, 3, 0, 0, false)
+
+        /*
+        grid.AddItem(menu, 0, 0, 1, 3, 0, 0, false).
+        AddItem(list, 1, 0, 1, 3, 0, 0, true).
+		AddItem(sideBar, 0, 0, 1, 3, 0, 0, false)
+        */
+
+        grid.AddItem(menu, 1, 0, 1, 1, 0, 100, false).
+		AddItem(list, 1, 1, 1, 1, 0, 100, true).
+		AddItem(textView, 1, 2, 1, 1, 0, 100, false)
+        //left := flex.AddItem(tview.NewBox().SetBorder(true).SetTitle("Left (1/2 x width of Top)"), 0, 1, false)
+        //row := tview.NewFlex().SetDirection(tview.FlexRow)
+          //row = row.AddItem(list.SetBorder(true).SetTitle("Repos"), 0, 3, true)
+         //row = row.AddItem(textView.SetBorder(true).SetTitle("Status"), 0, 3, false)
+         //flex.AddItem(left.SetBorder(true), 10, 1, false)
+
+
+
+
+
+        if err := app.SetRoot(grid, true).Run(); err != nil {
+		panic(err)
+	}
+}
+
+
 func main () {
+    flag.BoolVar(&autoSync, "auto-sync", false, "Automatically push then pull on clean repositories")
+    flag.BoolVar(&ui, "ui", false, "Experimental graphical user interface")
+    flag.Parse()
     c := make(chan string)
     go worker (c)
+
 
     walkHandler := func (path string, info os.FileInfo, err error) error {
         c <- path
@@ -92,5 +170,6 @@ func main () {
     }
     fmt.Println("These repositories need some attention:")
     filepath.Walk(".", walkHandler)
+    if ui { doui() }
     fmt.Println("Done!")
 }
