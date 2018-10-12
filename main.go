@@ -69,13 +69,15 @@ func quickCommand (cmd *exec.Cmd) string{
 
 
 func quickCommandInteractive (cmd *exec.Cmd) {
-    
     cmd.Stdin = os.Stdin
-    
     cmd.Stdout = os.Stdout
-    
     cmd.Stderr = os.Stderr
     cmd.Run()
+}
+
+func doQCI (strs []string) {
+	cmd := exec.Command(strs[0], strs[1:]...)
+                quickCommandInteractive(cmd)
 }
 
 func worker (c chan string) {
@@ -93,7 +95,7 @@ func worker (c chan string) {
                 result := quickCommand(cmd)
 				cmd = exec.Command("git", "status", "--porcelain")
                 shortresult := quickCommand(cmd)
-				cmd = exec.Command("git", "diff", "-p")
+				cmd = exec.Command("git", "diff", "--ignore-blank-lines")
                 diffresult := quickCommand(cmd)
 				reasons := []string{}
 				longreasons := []string{}
@@ -130,7 +132,7 @@ func grep (str string) string {
 	var out string
 	strs := strings.Split(str, "\n")
 	for _, v := range strs {
-		if strings.Index( v, "+  ") > -1 || strings.Index( v, "-  ") > -1  {
+		if strings.Index( v, "+") == 0 || strings.Index( v, "-") == 0  {
 			out = out + v + "\n"
 		}
 	}	
@@ -182,10 +184,8 @@ func doui() {
             list.AddItem(v[0], v[3], 'a', func(){
 			if lastSelect == v[0] {
 				app.Stop()
-				cmd := exec.Command("git", "commit", v[0])
-                quickCommandInteractive(cmd)
-				cmd = exec.Command("git", "push")
-                quickCommandInteractive(cmd)
+				doQCI([]string{"git", "commit", v[0]})
+				doQCI([]string{"git", "push"})
 				app.Run()
 			}
 			textView.SetText(repos[ii][2])
