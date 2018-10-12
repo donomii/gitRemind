@@ -113,7 +113,7 @@ func worker (c chan string) {
 					longreasons = append(longreasons, "untracked files present")
 				}
 				if len(reasons)>0 {
-                    fmt.Println(path)
+                    fmt.Printf("%v: %v\n", path, strings.Join(longreasons, ", "))
                     repos = append(repos, []string{path, shortresult, grep(diffresult), strings.Join(reasons, ", "), strings.Join(longreasons, ", ")})
                     //fmt.Println(result)
                     //fmt.Printf("\n\n\n\n\n")
@@ -240,7 +240,7 @@ func scanRepos(c chan string) {
         c <- path
         return nil
     }
-    fmt.Println("These repositories need some attention:")
+    //fmt.Println("These repositories need some attention:")
     filepath.Walk(".", walkHandler)
 }
 
