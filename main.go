@@ -69,12 +69,19 @@ func quickCommand (cmd *exec.Cmd) string{
 }
 
 
+func doQC (strs []string) string {
+	cmd := exec.Command(strs[0], strs[1:]...)
+    return quickCommand(cmd)
+}
+
 func quickCommandInteractive (cmd *exec.Cmd) {
     cmd.Stdin = os.Stdin
     cmd.Stdout = os.Stdout
     cmd.Stderr = os.Stderr
     cmd.Run()
 }
+
+
 
 func doQCI (strs []string) {
 	cmd := exec.Command(strs[0], strs[1:]...)
