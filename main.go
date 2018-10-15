@@ -91,6 +91,7 @@ func doQCI (strs []string) {
 func worker (c chan string) {
     var ahead_regex = regexp.MustCompile(`Your branch is ahead of`)
     var not_staged_regex = regexp.MustCompile(`Changes not staged for commit:`)
+    var staged_not_committed_regex = regexp.MustCompile(`Changes to be committed`)
     var modified_regex = regexp.MustCompile(`modified:`)
     var untracked_regex = regexp.MustCompile(`Untracked files:`)
 	repos = [][]string{}
@@ -111,10 +112,10 @@ func worker (c chan string) {
 					reasons = append(reasons, "!push")
 					longreasons = append(longreasons, "local commits not pushed")
 				}
-				if modified_regex.MatchString(result) || not_staged_regex.MatchString(result) {
+				if modified_regex.MatchString(result) || not_staged_regex.MatchString(result) || staged_not_committed_regex.MatchString(result) {
 					reasons = append(reasons, "!commtd")
 					longreasons = append(longreasons, "changes not committed")
-				}				
+				}
 				if untracked_regex.MatchString(result) {
 					reasons = append(reasons, "!tracked")
 					longreasons = append(longreasons, "untracked files present")
