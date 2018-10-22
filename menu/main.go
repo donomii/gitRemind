@@ -1,8 +1,9 @@
 package main
 
 import (
+    "github.com/mattn/go-shellwords"
 	"strings"
-	"text/scanner"
+	//"text/scanner"
     "github.com/rivo/tview"
     "flag"
     "fmt"
@@ -251,6 +252,7 @@ lines := strings.Split(src, "\n")
 startNode := Node{"Start", []*Node{}}
 for _, l := range lines {
     currentNode := &startNode
+    /*
 	var s scanner.Scanner
 	s.Init(strings.NewReader(l))
 	s.Filename = "example"
@@ -264,9 +266,20 @@ for _, l := range lines {
         } else {
             currentNode = findNode(currentNode, text)
         }
+        */
+        args, _ := shellwords.Parse(l)
+        for _, text := range args {
+             if findNode(currentNode, text) == nil {
+                newNode := Node{text, []*Node{}}
+                currentNode.SubNodes = append(currentNode.SubNodes, &newNode)
+                currentNode = &newNode
+            } else {
+                currentNode = findNode(currentNode, text)
+            }
+
 	}
-    fmt.Println()
 }
+    fmt.Println()
 fmt.Printf("%+v\n", startNode)
 dumpTree(&startNode, 0)
     return &startNode
