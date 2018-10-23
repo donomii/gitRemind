@@ -121,7 +121,7 @@ func toChar(i int) rune {
     return rune('a' + i)
 }
 
-func doui(header string, cN *Node, cT []string) (currentNode *Node, currentThing []string){
+func doui(header string, cN *Node, cT []string, extraText string) (currentNode *Node, currentThing []string, result string){
     currentNode = cN
     currentThing = cT
 
@@ -144,7 +144,7 @@ func doui(header string, cN *Node, cT []string) (currentNode *Node, currentThing
 		SetChangedFunc(func() {
 			app.Draw()
 		})
-        textView2.SetText( "lalalala")
+        textView2.SetText( extraText)
 		
 		footer := tview.NewTextView().
 		SetDynamicColors(true).
@@ -172,10 +172,17 @@ func doui(header string, cN *Node, cT []string) (currentNode *Node, currentThing
                 app.Stop()
             })
         }
+		list.AddItem("Run", "Press to exit", 'r', func() {
+            app.Stop()
+			result = doQC(currentThing)
+			
+		})
+		
 		list.AddItem("Quit", "Press to exit", 'q', func() {
             fmt.Println(strings.Join(currentThing, " ")+"\n")
 			os.Exit(0)
 		})
+		
 
 
         	//menu := newPrimitive("Menu")
@@ -195,7 +202,7 @@ func doui(header string, cN *Node, cT []string) (currentNode *Node, currentThing
         */
 
         grid.AddItem(list, 1, 0, 1, 1, 0, 100, true).
-		AddItem(textView, 1, 1, 1, 1, 0, 100, false).
+//		AddItem(textView, 1, 1, 1, 1, 0, 100, false).
 		AddItem(textView2, 1, 2, 1, 1, 0, 100, false)
         //left := flex.AddItem(tview.NewBox().SetBorder(true).SetTitle("Left (1/2 x width of Top)"), 0, 1, false)
         //row := tview.NewFlex().SetDirection(tview.FlexRow)
@@ -210,7 +217,15 @@ func doui(header string, cN *Node, cT []string) (currentNode *Node, currentThing
         if err := app.SetRoot(grid, true).Run(); err != nil {
 		panic(err)
 	}
-    return currentNode, currentThing
+    return currentNode, currentThing, result
+}
+
+func git() string {
+return `git status
+git push
+git pull
+git commit .
+`
 }
 
 func main () {
@@ -221,10 +236,12 @@ var currentThing []string
     flag.Parse()
     
 	
-    currentNode = createNodes()
+    currentNode = addHistoryNodes()
+	currentNode = addTextNodes(currentNode, git())
     currentThing = []string{}
+	result := ""
     for {
-    currentNode, currentThing = doui(strings.Join(currentThing, " "), currentNode, currentThing)
+    currentNode, currentThing, result = doui(strings.Join(currentThing, " "), currentNode, currentThing, result)
 }
 }
 
@@ -246,7 +263,7 @@ func findNode(n *Node, name string) *Node {
 }
 
 
-func createNodes() *Node {
+func addHistoryNodes() *Node {
     src := doCommand("fish", []string{"-c", "history"})
 lines := strings.Split(src, "\n")
 startNode := Node{"Start", []*Node{}}
@@ -279,10 +296,30 @@ for _, l := range lines {
 
 	}
 }
+return &startNode
+}
+
+
+func addTextNodes(startNode *Node, src string) *Node {
+lines := strings.Split(src, "\n")
+for _, l := range lines {
+    currentNode := startNode
+        args, _ := shellwords.Parse(l)
+        for _, text := range args {
+             if findNode(currentNode, text) == nil {
+                newNode := Node{text, []*Node{}}
+                currentNode.SubNodes = append(currentNode.SubNodes, &newNode)
+                currentNode = &newNode
+            } else {
+                currentNode = findNode(currentNode, text)
+            }
+	}
+}
+
     fmt.Println()
 fmt.Printf("%+v\n", startNode)
-dumpTree(&startNode, 0)
-    return &startNode
+dumpTree(startNode, 0)
+    return startNode
 
 }
 
