@@ -174,13 +174,21 @@ func doui(cN *Node, cT []*Node, extraText string) (currentNode *Node, currentThi
 		list.AddItem("Run", "Run your text", 'R', func() {
 			app.Stop()
 			//app.Suspend(func() {
+			result = doQC(NodesToStringArray(currentThing[1:]))
+
+			//})
+			textView.SetText(result)
+			app.Run()
+		})
+		list.AddItem("Run Interactive", "Run your text", 'R', func() {
+			app.Stop()
+			//app.Suspend(func() {
 			//result = doQC(NodesToStringArray(currentThing[1:]))
 			doQCI(NodesToStringArray(currentThing[1:]))
 			//})
 			textView.SetText(result)
 			app.Run()
 		})
-
 		list.AddItem("Back", "Go back", 'B', func() {
 			//app.Stop()
 			if len(currentThing) > 1 {
