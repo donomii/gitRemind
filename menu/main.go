@@ -172,22 +172,22 @@ func doui(cN *Node, cT []*Node, extraText string) (currentNode *Node, currentThi
 	populateList := func(list *tview.List) { os.Exit(0) }
 	extendList := func(list *tview.List) {
 		list.AddItem("Run", "Run your text", 'R', func() {
-			app.Stop()
+			//app.Stop()
 			//app.Suspend(func() {
-			result = doQC(NodesToStringArray(currentThing[1:]))
-
+			result = doCommand("/bin/sh", []string{"-c", strings.Join(NodesToStringArray(currentThing[1:]), " ")})
 			//})
 			textView.SetText(result)
-			app.Run()
+			//app.Run()
+			//app.Draw()
 		})
 		list.AddItem("Run Interactive", "Run your text", 'R', func() {
-			app.Stop()
-			//app.Suspend(func() {
-			//result = doQC(NodesToStringArray(currentThing[1:]))
-			doQCI(NodesToStringArray(currentThing[1:]))
-			//})
+			//app.Stop()
+			app.Suspend(func() {
+				//result = doQC(NodesToStringArray(currentThing[1:]))
+				doQCI(NodesToStringArray(currentThing[1:]))
+			})
 			textView.SetText(result)
-			app.Run()
+			//app.Run()
 		})
 		list.AddItem("Back", "Go back", 'B', func() {
 			//app.Stop()
