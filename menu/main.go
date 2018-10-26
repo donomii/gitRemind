@@ -4,6 +4,7 @@ import (
 	"image/color"
 	"io/ioutil"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/gdamore/tcell"
@@ -285,7 +286,7 @@ func updatefn(w *nucular.Window) {
 		}
 	*/
 	if w.Input().Keyboard.Text != "" {
-		log.Println(w.Input().Keyboard.Text)
+		//log.Println(w.Input().Keyboard.Text)
 		demoText = demoText + w.Input().Keyboard.Text
 	}
 
@@ -326,6 +327,7 @@ func updatefn(w *nucular.Window) {
 
 					cmd := name[1:]
 					result = goof.Command("/bin/sh", []string{"-c", cmd})
+					result = goof.Command("cmd", []string{"/c", cmd})
 				}
 
 				if strings.HasPrefix(name, "&") {
@@ -358,7 +360,7 @@ func updatefn(w *nucular.Window) {
 
 	if w.Button(label.T("Run your command"), false) {
 
-		result = goof.Command("/bin/sh", []string{"-c", strings.Join(NodesToStringArray(currentThing[1:]), " ")})
+		result = goof.Command("cmd", []string{"/c", strings.Join(NodesToStringArray(currentThing[1:]), " ")})
 
 		//})
 		//textView.SetText(result)
@@ -417,7 +419,7 @@ func updatefn(w *nucular.Window) {
 	buff = glim.FlipUp(nw, nh, buff)
 	tt := glim.ImageToGFormatRGBA(nw, nh, buff)
 	w.Cmds().DrawImage(rect.Rect{0, 0, nw, nh}, tt)
-	log.Printf("%+v", w.Input())
+	//log.Printf("%+v", w.Input())
 
 }
 
@@ -428,7 +430,7 @@ func makeStartNode() *Node {
 }
 
 func main() {
-
+	runtime.GOMAXPROCS(2)
 	flag.BoolVar(&autoSync, "auto-sync", false, "Automatically push then pull on clean repositories")
 	flag.BoolVar(&ui, "ui", false, "Experimental graphical user interface")
 	flag.Parse()
@@ -440,13 +442,19 @@ func main() {
 	//currentNode = addTextNodes(currentNode,grep("git", doCommand("fish", []string{"-c", "history"})))
 	currentThing = []*Node{currentNode}
 	//result := ""
-	for {
-		wnd := nucular.NewMasterWindow(0, "MyWindow", updatefn)
-		var theme nstyle.Theme = nstyle.DarkTheme
-		const scaling = 1.8
-		wnd.SetStyle(nstyle.FromTheme(theme, scaling))
-		wnd.Main()
-		currentNode, currentThing, result = doui(currentNode, currentThing, result)
+	wnd := nucular.NewMasterWindow(0, "MyWindow", updatefn)
+	var theme nstyle.Theme = nstyle.DarkTheme
+	scaling := 0.9
+	if runtime.GOOS == "darwin" {
+		scaling = 1.8
+	}
+	wnd.SetStyle(nstyle.FromTheme(theme, scaling))
+	wnd.Main()
+	if ui {
+		for {
+
+			currentNode, currentThing, result = doui(currentNode, currentThing, result)
+		}
 	}
 }
 
