@@ -1,6 +1,8 @@
 package main
 
 import (
+	"image/color"
+	"io/ioutil"
 	"path/filepath"
 	"strings"
 
@@ -8,17 +10,28 @@ import (
 	"github.com/mattn/go-shellwords"
 
 	//"text/scanner"
-	"bytes"
-	"crypto/md5"
-	"encoding/hex"
+
 	"flag"
 	"fmt"
-	"io"
-	"os"
-	"os/exec"
 
+	"log"
+	"os"
+
+	"github.com/donomii/glim"
+	"github.com/donomii/goof"
 	"github.com/rivo/tview"
+
+	"github.com/donomii/nucular"
+	"github.com/donomii/nucular/rect"
+
+	"github.com/donomii/nucular/label"
+
+	nstyle "github.com/donomii/nucular/style"
 )
+
+var demoText = "hi"
+var result = ""
+var tokens [][]string
 
 var autoSync bool
 var ui bool
@@ -27,99 +40,8 @@ var lastSelect string
 var app *tview.Application
 var workerChan chan string
 
-func hash_file_md5(filePath string) (string, error) {
-	//Initialize variable returnMD5String now in case an error has to be returned
-	var returnMD5String string
-
-	//Open the passed argument and check for any error
-	file, err := os.Open(filePath)
-	if err != nil {
-		return returnMD5String, err
-	}
-
-	//Tell the program to call the following function when the current function returns
-	defer file.Close()
-
-	//Open a new hash interface to write to
-	hash := md5.New()
-
-	//Copy the file in the hash interface and check for any error
-	if _, err := io.Copy(hash, file); err != nil {
-		return returnMD5String, err
-	}
-
-	//Get the 16 bytes hash
-	hashInBytes := hash.Sum(nil)[:16]
-
-	//Convert the bytes to a string
-	returnMD5String = hex.EncodeToString(hashInBytes)
-
-	return returnMD5String, nil
-
-}
-
-func quickCommand(cmd *exec.Cmd) string {
-	in := strings.NewReader("")
-	cmd.Stdin = in
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	var err bytes.Buffer
-	cmd.Stderr = &err
-	cmd.Run()
-	//fmt.Printf("Command result: %v\n", res)
-	ret := out.String()
-	//fmt.Println(ret)
-	return ret
-}
-
-func doQC(strs []string) string {
-	cmd := exec.Command(strs[0], strs[1:]...)
-	return quickCommand(cmd)
-}
-
-func quickCommandInteractive(cmd *exec.Cmd) {
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Run()
-}
-
-func doQCI(strs []string) {
-	cmd := exec.Command(strs[0], strs[1:]...)
-	quickCommandInteractive(cmd)
-}
-
-func doCommand(cmd string, args []string) string {
-	out, err := exec.Command(cmd, args...).CombinedOutput()
-	if err != nil {
-		//fmt.Fprintf(os.Stderr, "IO> %v\n", string(out))
-		//fmt.Fprintf(os.Stderr, "E> %v\n", err)
-		//os.Exit(1)
-	}
-	if string(out) != "" {
-		//fmt.Fprintf(os.Stderr, "O> %v\n\n", string(out))
-	}
-	return string(out)
-}
-
-func grep(search, str string) string {
-	var out string
-	strs := strings.Split(str, "\n")
-	for _, v := range strs {
-		if strings.Index(v, search) == 0 {
-			out = out + v + "\n"
-		}
-	}
-	return out
-}
-
-func toCharStr(i int) string {
-	return string('A' - 1 + i)
-}
-
-func toChar(i int) rune {
-	return rune('a' + i)
-}
+var currentNode *Node
+var currentThing []*Node
 
 func NodesToStringArray(ns []*Node) []string {
 	var out []string
@@ -174,7 +96,7 @@ func doui(cN *Node, cT []*Node, extraText string) (currentNode *Node, currentThi
 		list.AddItem("Run", "Run your text", 'R', func() {
 			//app.Stop()
 			//app.Suspend(func() {
-			result = doCommand("/bin/sh", []string{"-c", strings.Join(NodesToStringArray(currentThing[1:]), " ")})
+			result = goof.Command("/bin/sh", []string{"-c", strings.Join(NodesToStringArray(currentThing[1:]), " ")})
 			//})
 			textView.SetText(result)
 			//app.Run()
@@ -184,7 +106,7 @@ func doui(cN *Node, cT []*Node, extraText string) (currentNode *Node, currentThi
 			//app.Stop()
 			app.Suspend(func() {
 				//result = doQC(NodesToStringArray(currentThing[1:]))
-				doQCI(NodesToStringArray(currentThing[1:]))
+				goof.QCI(NodesToStringArray(currentThing[1:]))
 			})
 			textView.SetText(result)
 			//app.Run()
@@ -216,7 +138,7 @@ func doui(cN *Node, cT []*Node, extraText string) (currentNode *Node, currentThi
 			//It's a shell command
 
 			cmd := currentNode.Name[1:]
-			result = doCommand("/bin/sh", []string{"-c", cmd})
+			result = goof.Command("/bin/sh", []string{"-c", cmd})
 		}
 
 		if strings.HasPrefix(currentNode.Name, "&") {
@@ -226,6 +148,9 @@ func doui(cN *Node, cT []*Node, extraText string) (currentNode *Node, currentThi
 			cmd := currentNode.Name[1:]
 			if cmd == "lslR" {
 				result = strings.Join(lslR("."), "\n")
+			}
+			if cmd == "ls" {
+				result = strings.Join(ls("."), "\n")
 			}
 		}
 
@@ -238,7 +163,7 @@ func doui(cN *Node, cT []*Node, extraText string) (currentNode *Node, currentThi
 			//node := vv.SubNodes[i]
 			name := vv.Name
 			v := vv
-			list.AddItem(name, name, toChar(i), func() {
+			list.AddItem(name, name, goof.ToChar(i), func() {
 				if !strings.HasPrefix(name, "!") && !strings.HasPrefix(name, "&") {
 					currentThing = append(currentThing, v)
 				}
@@ -291,11 +216,23 @@ func lslR(dir string) []string {
 	return out
 }
 
+func ls(dir string) []string {
+	out := []string{".."}
+	files, _ := ioutil.ReadDir(".")
+	for _, f := range files {
+		out = append(out, f.Name())
+	}
+	return out
+}
+
 func git() string {
-	return `!ls
+	return `\&ls
+	\&lslR
 git status
+git status --porcelain
 git push
 git pull
+git pull --rebase
 git commit \&lslR
 git commit .
 git rebase
@@ -306,25 +243,209 @@ git diff
 git reset
 git reset --hard
 git branch -a
+git show "!git branch -a"
+git merge ""
 git add \&lslR
+git log
+git log shortlog
+git log -p
+git log --oneline
+git log --stat
+git log --graph
+git log --oneline --decorate
+git log --oneline --decorate --graph
+git log --oneline --decorate --graph --simplify-by-decoration
+git diff --summary
+git submodule init
+git submodule update --init --recursive
+git submodule sync
+imapcli status
+imapcli list
+imapcli read 1
+imapcli read 2
+imapcli read 3
+imapcli read 4
+imapcli read 5
+!set
 `
 }
 
+var header string
+
+func updatefn(w *nucular.Window) {
+
+	txtSize := 9.6
+	if w.Input().Mouse.Buttons[1].Down {
+		//col = color.RGBA{255, 0, 0, 0}
+		txtSize = 30
+	}
+	/*
+		for _, v := range w.Input().Keyboard.Keys {
+			log.Println("%+v", v.)
+		}
+	*/
+	if w.Input().Keyboard.Text != "" {
+		log.Println(w.Input().Keyboard.Text)
+		demoText = demoText + w.Input().Keyboard.Text
+	}
+
+	col := color.RGBA{255, 255, 255, 255}
+	w.Row(30).Dynamic(1)
+	header = "\n" + strings.Join(NodesToStringArray(currentThing[1:]), " ")
+	w.Label(header, "LC")
+	w.Row(30).Dynamic(1)
+	w.LabelColored(result, "LC", col)
+	/*
+		img, _ := glim.DrawStringRGBA(txtSize, col, "Hello again", "f1.ttf")
+		newH := img.Bounds().Max.Y
+		w.Row(newH).Dynamic(1)
+		w.Image(img)
+		img2, W, H := glim.GFormatToImage(img, nil, 0, 0)
+		img2 = glim.MakeTransparent(img2, color.RGBA{0, 0, 0, 0})
+		img3 := glim.Rotate270(W, H, img2)
+		img4 := glim.ImageToGFormatRGBA(H, W, img3)
+		img5 := img4
+		w.Image(img5)
+		w.Cmds().DrawImage(rect.Rect{50, 100, 200, 200}, img5)
+	*/
+
+	for _, vv := range currentNode.SubNodes {
+		//node := vv.SubNodes[i]
+		name := vv.Name
+		v := vv
+		if w.Button(label.T(name), false) {
+			if !strings.HasPrefix(name, "!") && !strings.HasPrefix(name, "&") {
+				currentThing = append(currentThing, v)
+				currentNode = v
+			} else {
+
+				log.Println("Running command", name)
+				if strings.HasPrefix(name, "!") {
+
+					//It's a shell command
+
+					cmd := name[1:]
+					result = goof.Command("/bin/sh", []string{"-c", cmd})
+				}
+
+				if strings.HasPrefix(name, "&") {
+
+					//It's an internal command
+
+					cmd := name[1:]
+					if cmd == "lslR" {
+						result = strings.Join(lslR("."), "\n")
+					}
+					if cmd == "ls" {
+						result = strings.Join(ls("."), "\n")
+					}
+				}
+
+				if result != "" {
+					log.Println("Ran command, got result", result)
+					execNode := Node{"Exec", []*Node{}}
+					addTextNodes(&execNode, result)
+					currentNode = &execNode
+				}
+
+			}
+
+			//list.Clear()
+			//populateList(list)
+			//app.Stop()
+		}
+	}
+
+	if w.Button(label.T("Run your command"), false) {
+
+		result = goof.Command("/bin/sh", []string{"-c", strings.Join(NodesToStringArray(currentThing[1:]), " ")})
+
+		//})
+		//textView.SetText(result)
+	}
+
+	if w.Button(label.T("Run your interactive command"), false) {
+
+		//result = doQC(NodesToStringArray(currentThing[1:]))
+		goof.QCI(NodesToStringArray(currentThing[1:]))
+
+		//textView.SetText(result)
+		//app.Run()
+	}
+	if w.Button(label.T("Change directory"), false) {
+
+		//result = doQC(NodesToStringArray(currentThing[1:]))
+		path := strings.Join(NodesToStringArray(currentThing[1:]), "/")
+		os.Chdir(path)
+		currentNode = makeStartNode()
+		currentThing = []*Node{currentNode}
+
+		//textView.SetText(result)
+		//app.Run()
+	}
+
+	if w.Button(label.T("Go back"), false) {
+		//app.Stop()
+		if len(currentThing) > 1 {
+			currentNode = currentThing[len(currentThing)-2]
+			currentThing = currentThing[:len(currentThing)-1]
+			//header.SetText(strings.Join(NodesToStringArray(currentThing), " "))
+			//list.Clear()
+			//populateList(list)
+		}
+	}
+	if w.Button(label.T("Press to exit"), false) {
+
+		fmt.Println(strings.Join(NodesToStringArray(currentThing), " ") + "\n")
+		app.Stop()
+		os.Exit(0)
+	}
+
+	w.Label(result, "LC")
+
+	f := glim.NewFormatter()
+	f.Colour = &color.RGBA{255, 255, 255, 255}
+	f.FontSize = txtSize
+	nw := 1200
+	nh := 800
+	buff := make([]byte, nw*nh*4)
+
+	//glim.RenderTokenPara(f, 0, 0, 10, 10, nw, nh, nw, nh, 1, 1, buff, tokens, true, true, false)
+	//buff2 := glim.Rotate270(nw, nh, buff)
+	//nw, nh = nh, nw
+	//glim.DumpBuff(buff,uint(nw),uint(nh))
+	buff = glim.FlipUp(nw, nh, buff)
+	tt := glim.ImageToGFormatRGBA(nw, nh, buff)
+	w.Cmds().DrawImage(rect.Rect{0, 0, nw, nh}, tt)
+	log.Printf("%+v", w.Input())
+
+}
+
+func makeStartNode() *Node {
+	n := &Node{"Start", []*Node{}}
+	addTextNodes(n, git())
+	return n
+}
+
 func main() {
-	var currentNode *Node
-	var currentThing []*Node
+
 	flag.BoolVar(&autoSync, "auto-sync", false, "Automatically push then pull on clean repositories")
 	flag.BoolVar(&ui, "ui", false, "Experimental graphical user interface")
 	flag.Parse()
 
-	currentNode = &Node{"Start", []*Node{}}
+	currentNode = makeStartNode()
 
 	//    currentNode = addHistoryNodes()
-	currentNode = addTextNodes(currentNode, git())
+
 	//currentNode = addTextNodes(currentNode,grep("git", doCommand("fish", []string{"-c", "history"})))
 	currentThing = []*Node{currentNode}
-	result := ""
+	//result := ""
 	for {
+		wnd := nucular.NewMasterWindow(0, "MyWindow", updatefn)
+		var theme nstyle.Theme = nstyle.DarkTheme
+		const scaling = 1.8
+		wnd.SetStyle(nstyle.FromTheme(theme, scaling))
+		wnd.Main()
 		currentNode, currentThing, result = doui(currentNode, currentThing, result)
 	}
 }
@@ -356,7 +477,7 @@ func findNode(n *Node, name string) *Node {
 }
 
 func addHistoryNodes() *Node {
-	src := doCommand("fish", []string{"-c", "history"})
+	src := goof.Command("fish", []string{"-c", "history"})
 	lines := strings.Split(src, "\n")
 	startNode := Node{"Start", []*Node{}}
 	for _, l := range lines {
