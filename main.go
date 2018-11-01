@@ -142,7 +142,7 @@ func doui() {
 				goof.QCI([]string{"git", "commit", "-a"})
 				goof.QCI([]string{"git", "push"})
 				os.Chdir(cwd)
-				scanRepos(workerChan)
+				doScan()
 				app.Run()
 			}
 			textView.SetText(repos[ii][2])
@@ -196,6 +196,13 @@ func scanRepos(c chan string) {
     close(c)
 }
 
+func doScan() {
+	go worker(workerChan)
+	scanRepos(workerChan)
+    <- doneChan
+	log.Println("Scan complete!")
+}
+
 func main() {
 	flag.BoolVar(&autoSync, "auto-sync", false, "Automatically push then pull on clean repositories")
 	flag.BoolVar(&ui, "ui", false, "Experimental graphical user interface")
@@ -204,10 +211,8 @@ func main() {
 
 	workerChan = make(chan string, 10)
 	doneChan = make(chan bool)
-	go worker(workerChan)
-	scanRepos(workerChan)
-    <- doneChan
-	log.Println("Scan complete!")
+    doScan()
+
 
 	if ui {
 		doui()
