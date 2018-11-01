@@ -145,10 +145,12 @@ func doui() {
 				doScan()
 				app.Run()
 			}
+            if len(repos) > ii { //FIXME???
 			textView.SetText(repos[ii][2])
 			textView2.SetText(repos[ii][1])
 			footer.SetText(repos[ii][4])
 			lastSelect = v[0]
+        }
 		})
 	}
 	list.AddItem("Quit", "Press to exit", 'q', func() {
