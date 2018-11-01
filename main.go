@@ -197,9 +197,12 @@ func scanRepos(c chan string) {
 }
 
 func doScan() {
+	workerChan = make(chan string, 10)
+	doneChan = make(chan bool)
 	go worker(workerChan)
 	scanRepos(workerChan)
     <- doneChan
+    close(doneChan)
 	log.Println("Scan complete!")
 }
 
@@ -209,8 +212,6 @@ func main() {
 	flag.BoolVar(&verbose, "verbose", false, "Print details while working")
 	flag.Parse()
 
-	workerChan = make(chan string, 10)
-	doneChan = make(chan bool)
     doScan()
 
 
