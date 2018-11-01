@@ -29,14 +29,17 @@ func worker(c chan string) {
 	var staged_not_committed_regex = regexp.MustCompile(`Changes to be committed`)
 	var modified_regex = regexp.MustCompile(`modified:`)
 	var untracked_regex = regexp.MustCompile(`Untracked files:`)
+
 	repos = [][]string{}
 	cwd, _ := os.Getwd()
 	for path := range c {
-		if verbose {
-            log.Println(path)
-        }
+
 		os.Chdir(cwd)
-		if f, _ := os.Stat(fmt.Sprintf("%v/%v", path, ".git")); f != nil && f.IsDir() {
+		gitpath := fmt.Sprintf("%v/%v", path, ".git")
+		if goof.IsDir(gitpath) {
+			if verbose {
+				log.Println(gitpath)
+			}
 			os.Chdir(path)
 			cmd := exec.Command("git", "status")
 			result := goof.QuickCommand(cmd)
@@ -46,26 +49,28 @@ func worker(c chan string) {
 			diffresult := goof.QuickCommand(cmd)
 			reasons := []string{}
 			longreasons := []string{}
+
 			if ahead_regex.MatchString(result) {
-				reasons = append(reasons, "!push")
+				reasons = append(reasons, "push")
 				longreasons = append(longreasons, "local commits not pushed")
 			}
 			if modified_regex.MatchString(result) || not_staged_regex.MatchString(result) || staged_not_committed_regex.MatchString(result) {
-				reasons = append(reasons, "!commtd")
+				reasons = append(reasons, "commit")
 				longreasons = append(longreasons, "changes not committed")
 			}
 			if untracked_regex.MatchString(result) {
-				reasons = append(reasons, "!tracked")
+				reasons = append(reasons, "track")
 				longreasons = append(longreasons, "untracked files present")
 			}
 			if len(reasons) > 0 {
 				fmt.Printf("%v: %v\n", path, strings.Join(longreasons, ", "))
 				repos = append(repos, []string{path, shortresult, grep(diffresult), strings.Join(reasons, ", "), strings.Join(longreasons, ", ")})
-                if verbose {
-				fmt.Println(result)
-				fmt.Printf("\n\n\n\n\n")
+				if verbose {
+					fmt.Println(result)
+					fmt.Printf("\n\n\n\n\n")
+				}
 			}
-        }
+
 			if autoSync {
 				fmt.Println("Syncing " + path)
 				cmd := exec.Command("git", "push")
@@ -74,8 +79,9 @@ func worker(c chan string) {
 				goof.QuickCommand(cmd)
 			}
 		}
+		os.Chdir(cwd)
 	}
-    doneChan <- true
+	doneChan <- true
 }
 
 func grep(str string) string {
@@ -145,12 +151,12 @@ func doui() {
 				doScan()
 				app.Run()
 			}
-            if len(repos) > ii { //FIXME???
-			textView.SetText(repos[ii][2])
-			textView2.SetText(repos[ii][1])
-			footer.SetText(repos[ii][4])
-			lastSelect = v[0]
-        }
+			if len(repos) > ii { //FIXME???
+				textView.SetText(repos[ii][2])
+				textView2.SetText(repos[ii][1])
+				footer.SetText(repos[ii][4])
+				lastSelect = v[0]
+			}
 		})
 	}
 	list.AddItem("Quit", "Press to exit", 'q', func() {
@@ -188,14 +194,19 @@ func doui() {
 }
 
 func scanRepos(c chan string) {
+	var git_regex = regexp.MustCompile(`\.git`)
 	walkHandler := func(path string, info os.FileInfo, err error) error {
-		//log.Println(path)
-		c <- path
+
+		if !git_regex.MatchString(path) {
+
+			c <- path
+
+		}
 		return nil
 	}
 	//fmt.Println("These repositories need some attention:")
 	filepath.Walk(".", walkHandler)
-    close(c)
+	close(c)
 }
 
 func doScan() {
@@ -203,8 +214,8 @@ func doScan() {
 	doneChan = make(chan bool)
 	go worker(workerChan)
 	scanRepos(workerChan)
-    <- doneChan
-    close(doneChan)
+	<-doneChan
+	close(doneChan)
 	log.Println("Scan complete!")
 }
 
@@ -214,8 +225,7 @@ func main() {
 	flag.BoolVar(&verbose, "verbose", false, "Print details while working")
 	flag.Parse()
 
-    doScan()
-
+	doScan()
 
 	if ui {
 		doui()
