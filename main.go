@@ -149,7 +149,7 @@ func doui() {
 				goof.QCI([]string{"git", "push"})
 				os.Chdir(cwd)
 				doScan()
-				app.Run()
+				doui()
 			}
 			if len(repos) > ii { //FIXME???
 				textView.SetText(repos[ii][2])
@@ -216,6 +216,7 @@ func doScan() {
 	scanRepos(workerChan)
 	<-doneChan
 	close(doneChan)
+
 	log.Println("Scan complete!")
 }
 
