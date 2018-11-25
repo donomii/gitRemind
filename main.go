@@ -8,20 +8,39 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
+	"time"
 
 	"github.com/donomii/goof"
+	"github.com/go-gl/gl/v3.2-core/gl"
+	"github.com/go-gl/glfw/v3.2/glfw"
+	"github.com/golang-ui/nuklear/nk"
 	"github.com/rivo/tview"
+	"github.com/xlab/closer"
+	"golang.org/x/image/font/gofont/goregular"
 )
 
 var autoSync bool
 var ui bool
+var gui bool
 var verbose bool
 var repos [][]string
 var lastSelect string
 var app *tview.Application
 var workerChan chan string
 var doneChan chan bool
+
+var winWidth = 900
+var winHeight = 900
+
+type Option uint8
+
+type State struct {
+	bgColor nk.Color
+	prop    int32
+	opt     Option
+}
 
 func worker(c chan string) {
 	var ahead_regex = regexp.MustCompile(`Your branch is ahead of`)
@@ -223,6 +242,7 @@ func doScan() {
 func main() {
 	flag.BoolVar(&autoSync, "auto-sync", false, "Automatically push then pull on clean repositories")
 	flag.BoolVar(&ui, "ui", false, "Experimental graphical user interface")
+	flag.BoolVar(&gui, "gui", false, "Experimental graphical user interface")
 	flag.BoolVar(&verbose, "verbose", false, "Print details while working")
 	flag.Parse()
 
@@ -231,5 +251,121 @@ func main() {
 	if ui {
 		doui()
 	}
+	if gui {
+		startNuke()
+	}
 	fmt.Println("Done!")
+}
+
+// Start nuklear
+func startNuke() {
+	runtime.GOMAXPROCS(1)
+	runtime.LockOSThread()
+	if err := glfw.Init(); err != nil {
+		closer.Fatalln(err)
+	}
+	glfw.WindowHint(glfw.ContextVersionMajor, 3)
+	glfw.WindowHint(glfw.ContextVersionMinor, 2)
+	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
+	glfw.WindowHint(glfw.OpenGLForwardCompatible, glfw.True)
+	win, err := glfw.CreateWindow(winWidth, winHeight, "Menu", nil, nil)
+	if err != nil {
+		closer.Fatalln(err)
+	}
+	win.MakeContextCurrent()
+
+	width, height := win.GetSize()
+	log.Printf("glfw: created window %dx%d", width, height)
+
+	if err := gl.Init(); err != nil {
+		closer.Fatalln("opengl: init failed:", err)
+	}
+	gl.Viewport(0, 0, int32(width-1), int32(height-1))
+
+	ctx := nk.NkPlatformInit(win, nk.PlatformInstallCallbacks)
+
+	atlas := nk.NewFontAtlas()
+	nk.NkFontStashBegin(&atlas)
+	/*data, err := ioutil.ReadFile("FreeSans.ttf")
+	if err != nil {
+		panic("Could not find file")
+	}*/
+
+	sansFont := nk.NkFontAtlasAddFromBytes(atlas, goregular.TTF, 16, nil)
+	// sansFont := nk.NkFontAtlasAddDefault(atlas, 16, nil)
+	nk.NkFontStashEnd()
+	if sansFont != nil {
+		nk.NkStyleSetFont(ctx, sansFont.Handle())
+	}
+
+	exitC := make(chan struct{}, 1)
+	doneC := make(chan struct{}, 1)
+	closer.Bind(func() {
+		close(exitC)
+		<-doneC
+	})
+
+	fpsTicker := time.NewTicker(time.Second / 30)
+	for {
+		select {
+		case <-exitC:
+			nk.NkPlatformShutdown()
+			glfw.Terminate()
+			fpsTicker.Stop()
+			close(doneC)
+			return
+		case <-fpsTicker.C:
+			if win.ShouldClose() {
+				close(exitC)
+				continue
+			}
+			glfw.PollEvents()
+			state := &State{
+				bgColor: nk.NkRgba(28, 48, 62, 255),
+			}
+			gfxMain(win, ctx, state)
+		}
+	}
+
+	//End Nuklear
+}
+
+func gfxMain(win *glfw.Window, ctx *nk.Context, state *State) {
+
+	maxVertexBuffer := 512 * 1024
+	maxElementBuffer := 128 * 1024
+
+	nk.NkPlatformNewFrame()
+
+	// Layout
+	bounds := nk.NkRect(50, 50, 230, 250)
+	update := nk.NkBegin(ctx, "Menu", bounds,
+		nk.WindowBorder|nk.WindowMovable|nk.WindowScalable|nk.WindowMinimizable|nk.WindowTitle)
+	nk.NkWindowSetPosition(ctx, "Menu", nk.NkVec2(0, 0))
+	nk.NkWindowSetSize(ctx, "Menu", nk.NkVec2(float32(winWidth), float32(winHeight)))
+
+	if update > 0 {
+
+		QuickFileEditor(ctx)
+
+	}
+	nk.NkEnd(ctx)
+
+	// Render
+	bg := make([]float32, 4)
+	nk.NkColorFv(bg, state.bgColor)
+	width, height := win.GetSize()
+	gl.Viewport(0, 0, int32(width), int32(height))
+	gl.Clear(gl.COLOR_BUFFER_BIT)
+	gl.ClearColor(bg[0], bg[1], bg[2], bg[3])
+	nk.NkPlatformRender(nk.AntiAliasingOn, maxVertexBuffer, maxElementBuffer)
+	win.SwapBuffers()
+}
+
+func ButtonBox(ctx *nk.Context) {
+
+}
+
+func QuickFileEditor(ctx *nk.Context) {
+
 }
