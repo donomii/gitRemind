@@ -346,7 +346,7 @@ func gfxMain(win *glfw.Window, ctx *nk.Context, state *State) {
 
 	if update > 0 {
 
-		QuickFileEditor(ctx)
+		ButtonBox(ctx)
 
 	}
 	nk.NkEnd(ctx)
@@ -363,7 +363,49 @@ func gfxMain(win *glfw.Window, ctx *nk.Context, state *State) {
 }
 
 func ButtonBox(ctx *nk.Context) {
+	fileDisplay := ""
+	nk.NkLayoutRowDynamic(ctx, 400, 2)
+	{
+		nk.NkGroupBegin(ctx, "Group 1", nk.WindowBorder)
+		nk.NkLayoutRowDynamic(ctx, 20, 1)
+		{
+			for _, vv := range repos {
+				//node := vv.SubNodes[i]
+				name := vv[0]
 
+				if nk.NkButtonLabel(ctx, name) > 0 {
+
+				}
+			}
+
+			if 0 < nk.NkButtonLabel(ctx, "Run command") {
+
+			}
+
+			if 0 < nk.NkButtonLabel(ctx, "Run command interactively") {
+
+			}
+			if 0 < nk.NkButtonLabel(ctx, "Change directory") {
+
+			}
+
+			if 0 < nk.NkButtonLabel(ctx, "Go back") {
+
+			}
+			if 0 < nk.NkButtonLabel(ctx, "Exit") {
+
+				os.Exit(0)
+			}
+		}
+		nk.NkGroupEnd(ctx)
+
+		nk.NkGroupBegin(ctx, "Group 2", nk.WindowBorder)
+		nk.NkLayoutRowDynamic(ctx, 10, 1)
+		{
+			nk.NkLabelWrap(ctx, string(EditBytes))
+		}
+		nk.NkGroupEnd(ctx)
+	}
 }
 
 func QuickFileEditor(ctx *nk.Context) {
