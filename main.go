@@ -402,7 +402,7 @@ func ButtonBox(ctx *nk.Context) {
 		nk.NkGroupBegin(ctx, "Group 2", nk.WindowBorder)
 		nk.NkLayoutRowDynamic(ctx, 10, 1)
 		{
-			nk.NkLabelWrap(ctx, string(EditBytes))
+			nk.NkLabelWrap(ctx, string([]byte(fileDisplay)))
 		}
 		nk.NkGroupEnd(ctx)
 	}
