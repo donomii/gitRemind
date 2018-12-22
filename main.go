@@ -21,6 +21,8 @@ import (
 	"golang.org/x/image/font/gofont/goregular"
 )
 
+var targetDir string
+var detailDisplay string = "Detail Disply Inital Value"
 var autoSync bool
 var ui bool
 var gui bool
@@ -114,6 +116,24 @@ func grep(str string) string {
 	return out
 }
 
+func CommitPush(targetDir string) {
+	cwd, _ := os.Getwd()
+
+	os.Chdir(targetDir)
+	fmt.Printf("%v\n", []string{"git", "commit", "-a"})
+	goof.QCI([]string{"git", "commit", "-a"})
+	goof.QCI([]string{"git", "push"})
+	os.Chdir(cwd)
+}
+
+func Pull(targetDir string) {
+	cwd, _ := os.Getwd()
+
+	os.Chdir(targetDir)
+	goof.QCI([]string{"git", "pull"})
+	os.Chdir(cwd)
+}
+
 func doui() {
 
 	//box := tview.NewBox().SetBorder(true).SetTitle("Hello, world!")
@@ -160,13 +180,8 @@ func doui() {
 
 			if lastSelect == v[0] {
 				app.Stop()
-				cwd, _ := os.Getwd()
 
-				os.Chdir(v[0])
-				fmt.Printf("%v\n", []string{"git", "commit", "-a"})
-				goof.QCI([]string{"git", "commit", "-a"})
-				goof.QCI([]string{"git", "push"})
-				os.Chdir(cwd)
+				CommitPush(v[0])
 				doScan()
 				doui()
 			}
@@ -364,7 +379,7 @@ func gfxMain(win *glfw.Window, ctx *nk.Context, state *State) {
 }
 
 func ButtonBox(ctx *nk.Context) {
-	fileDisplay := ""
+
 	nk.NkLayoutRowDynamic(ctx, 400, 2)
 	{
 		nk.NkGroupBegin(ctx, "Group 1", nk.WindowBorder)
@@ -376,7 +391,8 @@ func ButtonBox(ctx *nk.Context) {
 					name := vv[0]
 
 					if nk.NkButtonLabel(ctx, name) > 0 {
-
+						targetDir = name
+						detailDisplay = "Files\n-----\n" + vv[1] + "\nDiff\n----\n" + vv[2]
 					}
 				}
 			} else {
@@ -389,7 +405,9 @@ func ButtonBox(ctx *nk.Context) {
 			if 0 < nk.NkButtonLabel(ctx, "Change directory") {
 
 			}
+			if 0 < nk.NkButtonLabel(ctx, detailDisplay) {
 
+			}
 			if 0 < nk.NkButtonLabel(ctx, "Exit") {
 
 				os.Exit(0)
@@ -400,7 +418,29 @@ func ButtonBox(ctx *nk.Context) {
 		nk.NkGroupBegin(ctx, "Group 2", nk.WindowBorder)
 		nk.NkLayoutRowDynamic(ctx, 10, 1)
 		{
-			nk.NkLabelWrap(ctx, string([]byte(fileDisplay)))
+			//Control the display
+			nk.NkLayoutRowDynamic(ctx, 20, 3)
+			{
+
+				if 0 < nk.NkButtonLabel(ctx, "Pull") {
+					Pull(targetDir)
+				}
+
+				if 0 < nk.NkButtonLabel(ctx, "Commit - Push") {
+					CommitPush(targetDir)
+
+				}
+
+				if 0 < nk.NkButtonLabel(ctx, "Sync") {
+
+				}
+
+				results := strings.Split(detailDisplay, "\n")
+				for _, v := range results {
+					//nk.NkLabel(ctx, v, nk.WindowBorder)
+					nk.NkLabel(ctx, v, nk.TextLeft)
+				}
+			}
 		}
 		nk.NkGroupEnd(ctx)
 	}
