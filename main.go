@@ -405,9 +405,7 @@ func ButtonBox(ctx *nk.Context) {
 			if 0 < nk.NkButtonLabel(ctx, "Change directory") {
 
 			}
-			if 0 < nk.NkButtonLabel(ctx, detailDisplay) {
 
-			}
 			if 0 < nk.NkButtonLabel(ctx, "Exit") {
 
 				os.Exit(0)
