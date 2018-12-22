@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/donomii/gitRemind.svg?branch=master)](https://travis-ci.org/donomii/gitRemind) [![GoDoc](https://godoc.org/github.com/donomii/gitRemind?status.svg)](https://godoc.org/github.com/donomii/gitRemind)
+
 # gitRemind
 Searches your drive for git repositories, and tells you if they need to be committed or pushed.
 
@@ -14,6 +16,8 @@ GitRemind now features an experimental text mode UI, to automate committing and 
     ./gitRemind
     
     ./gitRemind --ui
+    
+    ./gitRemind --gui
 
 gitRemind will recursively search every directory under the current one.  If it finds a git repository, it does a git status, and if there are changed files or you are ahead of the master branch, it will tell you.
 
