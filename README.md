@@ -16,6 +16,8 @@ GitRemind now features an experimental text mode UI, to automate committing and 
     ./gitRemind
     
     ./gitRemind --ui
+    
+    ./gitRemind --gui
 
 gitRemind will recursively search every directory under the current one.  If it finds a git repository, it does a git status, and if there are changed files or you are ahead of the master branch, it will tell you.
 
