@@ -240,6 +240,11 @@ func doScan() {
 }
 
 func main() {
+	runtime.GOMAXPROCS(1)
+	runtime.LockOSThread()
+	if err := glfw.Init(); err != nil {
+		closer.Fatalln(err)
+	}
 	flag.BoolVar(&autoSync, "auto-sync", false, "Automatically push then pull on clean repositories")
 	flag.BoolVar(&ui, "ui", false, "Experimental graphical user interface")
 	flag.BoolVar(&gui, "gui", false, "Experimental graphical user interface")
@@ -259,11 +264,7 @@ func main() {
 
 // Start nuklear
 func startNuke() {
-	runtime.GOMAXPROCS(1)
-	runtime.LockOSThread()
-	if err := glfw.Init(); err != nil {
-		closer.Fatalln(err)
-	}
+
 	glfw.WindowHint(glfw.ContextVersionMajor, 3)
 	glfw.WindowHint(glfw.ContextVersionMinor, 2)
 	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
@@ -339,10 +340,10 @@ func gfxMain(win *glfw.Window, ctx *nk.Context, state *State) {
 
 	// Layout
 	bounds := nk.NkRect(50, 50, 230, 250)
-	update := nk.NkBegin(ctx, "Menu", bounds,
+	update := nk.NkBegin(ctx, "GitRemind", bounds,
 		nk.WindowBorder|nk.WindowMovable|nk.WindowScalable|nk.WindowMinimizable|nk.WindowTitle)
-	nk.NkWindowSetPosition(ctx, "Menu", nk.NkVec2(0, 0))
-	nk.NkWindowSetSize(ctx, "Menu", nk.NkVec2(float32(winWidth), float32(winHeight)))
+	nk.NkWindowSetPosition(ctx, "GitRemind", nk.NkVec2(0, 0))
+	nk.NkWindowSetSize(ctx, "GitRemind", nk.NkVec2(float32(winWidth), float32(winHeight)))
 
 	if update > 0 {
 
@@ -369,29 +370,26 @@ func ButtonBox(ctx *nk.Context) {
 		nk.NkGroupBegin(ctx, "Group 1", nk.WindowBorder)
 		nk.NkLayoutRowDynamic(ctx, 20, 1)
 		{
-			for _, vv := range repos {
-				//node := vv.SubNodes[i]
-				name := vv[0]
+			if len(repos) > 0 {
+				for _, vv := range repos {
+					//node := vv.SubNodes[i]
+					name := vv[0]
 
-				if nk.NkButtonLabel(ctx, name) > 0 {
+					if nk.NkButtonLabel(ctx, name) > 0 {
+
+					}
+				}
+			} else {
+
+				if 0 < nk.NkButtonLabel(ctx, "No repos found, click to open a directory") {
 
 				}
 			}
 
-			if 0 < nk.NkButtonLabel(ctx, "Run command") {
-
-			}
-
-			if 0 < nk.NkButtonLabel(ctx, "Run command interactively") {
-
-			}
 			if 0 < nk.NkButtonLabel(ctx, "Change directory") {
 
 			}
 
-			if 0 < nk.NkButtonLabel(ctx, "Go back") {
-
-			}
 			if 0 < nk.NkButtonLabel(ctx, "Exit") {
 
 				os.Exit(0)
