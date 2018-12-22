@@ -1,3 +1,5 @@
+ [![Build Status][CIStatus]][CIProject] [![GoDoc][GoDocStatus]][GoDoc]
+
 # gitRemind
 Searches your drive for git repositories, and tells you if they need to be committed or pushed.
 
