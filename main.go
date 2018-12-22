@@ -435,6 +435,9 @@ func ButtonBox(ctx *nk.Context) {
 
 				}
 
+			}
+			nk.NkLayoutRowDynamic(ctx, 10, 1)
+			{
 				results := strings.Split(detailDisplay, "\n")
 				for _, v := range results {
 					//nk.NkLabel(ctx, v, nk.WindowBorder)
