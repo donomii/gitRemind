@@ -1,4 +1,4 @@
- [![Build Status][CIStatus]][CIProject] [![GoDoc][GoDocStatus]][GoDoc]
+[![Build Status](https://travis-ci.org/donomii/gitRemind.svg?branch=master)](https://travis-ci.org/donomii/gitRemind) [![GoDoc](https://godoc.org/github.com/donomii/gitRemind?status.svg)](https://godoc.org/github.com/donomii/gitRemind)
 
 # gitRemind
 Searches your drive for git repositories, and tells you if they need to be committed or pushed.
