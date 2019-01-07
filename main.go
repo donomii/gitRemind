@@ -62,6 +62,7 @@ func worker(c chan string) {
 				log.Println(gitpath)
 			}
 			os.Chdir(path)
+			cmd := exec.Command("git", "fetch")
 			cmd := exec.Command("git", "status")
 			result := goof.QuickCommand(cmd)
 			cmd = exec.Command("git", "status", "--porcelain")
