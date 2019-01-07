@@ -50,6 +50,8 @@ func worker(c chan string) {
 	var staged_not_committed_regex = regexp.MustCompile(`Changes to be committed`)
 	var modified_regex = regexp.MustCompile(`modified:`)
 	var untracked_regex = regexp.MustCompile(`Untracked files:`)
+	var behind_regex = regexp.MustCompile(`Your branch is behind`)
+	var both_regex = regexp.MustCompile(`different commits each, respectively.`)
 
 	repos = [][]string{}
 	cwd, _ := os.Getwd()
@@ -63,7 +65,7 @@ func worker(c chan string) {
 			}
 			os.Chdir(path)
 			cmd := exec.Command("git", "fetch")
-			cmd := exec.Command("git", "status")
+			cmd = exec.Command("git", "status")
 			result := goof.QuickCommand(cmd)
 			cmd = exec.Command("git", "status", "--porcelain")
 			shortresult := goof.QuickCommand(cmd)
@@ -75,6 +77,14 @@ func worker(c chan string) {
 			if ahead_regex.MatchString(result) {
 				reasons = append(reasons, "push")
 				longreasons = append(longreasons, "local commits not pushed")
+			}
+			if behind_regex.MatchString(result) {
+				reasons = append(reasons, "pull")
+				longreasons = append(longreasons, "remote branch changed")
+			}
+			if both_regex.MatchString(result) {
+				reasons = append(reasons, "diverge")
+				longreasons = append(longreasons, "remote branch and local branch changed")
 			}
 			if modified_regex.MatchString(result) || not_staged_regex.MatchString(result) || staged_not_committed_regex.MatchString(result) {
 				reasons = append(reasons, "commit")
