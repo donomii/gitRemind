@@ -2,14 +2,15 @@
 package main
 
 import (
-"os"
-"strings"
-	"github.com/golang-ui/nuklear/nk"
 	"log"
-	"github.com/xlab/closer"
-	"github.com/go-gl/glfw/v3.2/glfw"
+	"os"
+	"strings"
 	"time"
+
 	"github.com/go-gl/gl/v3.2-core/gl"
+	"github.com/go-gl/glfw/v3.2/glfw"
+	"github.com/golang-ui/nuklear/nk"
+	"github.com/xlab/closer"
 	"golang.org/x/image/font/gofont/goregular"
 )
 
@@ -128,7 +129,7 @@ func ButtonBox(ctx *nk.Context) {
 
 					if nk.NkButtonLabel(ctx, name) > 0 {
 						targetDir = name
-						detailDisplay = "Files\n-----\n" + vv[1] + "\nDiff\n----\n" + vv[2]
+						detailDisplay = "Conditions\n-----\n" + vv[4] + "\n\nFiles\n-----\n" + vv[1] + "\nDiff\n----\n" + vv[2]
 					}
 				}
 			} else {
