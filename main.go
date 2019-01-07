@@ -15,6 +15,7 @@ import (
 	"github.com/go-gl/glfw/v3.2/glfw"
 	"github.com/golang-ui/nuklear/nk"
 	"github.com/xlab/closer"
+	"github.com/rivo/tview"
 )
 
 var targetDir string
