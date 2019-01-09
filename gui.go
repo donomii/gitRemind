@@ -110,7 +110,7 @@ func startNuke() {
 }
 
 func gfxMain(win *glfw.Window, ctx *nk.Context, state *State) {
-	log.Println("Redraw")
+	//log.Println("Redraw")
 	maxVertexBuffer := 512 * 1024
 	maxElementBuffer := 128 * 1024
 
@@ -138,7 +138,7 @@ func gfxMain(win *glfw.Window, ctx *nk.Context, state *State) {
 			//h, _ := gfx.NewTextureFromFile("test.png", 480, 480)
 			//log.Println("Image loaded:", h.Handle)
 			nk.NkButtonImage(ctx, testim)
-			log.Println("Image displayed")
+			//log.Println("Image displayed")
 			//Control the display
 		}
 	}
