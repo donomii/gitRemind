@@ -142,6 +142,9 @@ func startNuke() {
 			}
 		}
 	}
+	pane3 := func() {
+		nk.NkButtonImage(ctx, testim)
+	}
 	for {
 		select {
 		case <-exitC:
@@ -159,14 +162,14 @@ func startNuke() {
 			state := &State{
 				bgColor: nk.NkRgba(28, 48, 62, 255),
 			}
-			ClassicEmail3Pane(win, ctx, state, pane1, pane2)
+			ClassicEmail3Pane(win, ctx, state, pane1, pane2, pane3)
 		}
 	}
 
 	//End Nuklear
 }
 
-func ClassicEmail3Pane(win *glfw.Window, ctx *nk.Context, state *State, pane1, pane2 func()) {
+func ClassicEmail3Pane(win *glfw.Window, ctx *nk.Context, state *State, pane1, pane2, pane3 func()) {
 	//log.Println("Redraw")
 	maxVertexBuffer := 512 * 1024
 	maxElementBuffer := 128 * 1024
@@ -194,7 +197,8 @@ func ClassicEmail3Pane(win *glfw.Window, ctx *nk.Context, state *State, pane1, p
 			//log.Println("Loading Image")
 			//h, _ := gfx.NewTextureFromFile("test.png", 480, 480)
 			//log.Println("Image loaded:", h.Handle)
-			nk.NkButtonImage(ctx, testim)
+			pane3()
+
 			//log.Println("Image displayed")
 			//Control the display
 		}
