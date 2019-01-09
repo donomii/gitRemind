@@ -2,11 +2,20 @@
 package main
 
 import (
+	//"C"
 	"log"
 	"os"
 	"strings"
 	"time"
 
+	//"unsafe"
+
+	"github.com/cstegel/opengl-samples-golang/colors/gfx"
+
+	_ "image/jpeg"
+	_ "image/png"
+
+	//"github.com/donomii/glim"
 	"github.com/go-gl/gl/v3.2-core/gl"
 	"github.com/go-gl/glfw/v3.2/glfw"
 	"github.com/golang-ui/nuklear/nk"
@@ -14,9 +23,11 @@ import (
 	"golang.org/x/image/font/gofont/goregular"
 )
 
+//type Image C.struct_nk_image
+
 // Start nuklear
 func startNuke() {
-
+	log.Println("Starting nuke")
 	glfw.WindowHint(glfw.ContextVersionMajor, 3)
 	glfw.WindowHint(glfw.ContextVersionMinor, 2)
 	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
@@ -59,6 +70,23 @@ func startNuke() {
 	})
 
 	fpsTicker := time.NewTicker(time.Second / 30)
+
+	log.Println("Loading Image")
+	h, err := gfx.NewTextureFromFile("test.png", 480, 480)
+	log.Println("Image loaded:", h.Handle, err)
+	testim = nk.NkImageId(int32(h.Handle))
+	/*
+		withGlctx(func() {
+			pic, w, h := glim.LoadImage("test.png")
+			log.Println("Loaded image")
+			testim = load_nk_image(pic, w, h)
+			//var ti C.struct_nk_image = *(*C.struct_nk_image)(unsafe.Pointer(&testim))
+			//var ti Image = Image(testim)
+			//ti.w = 480
+			log.Println("Uploaded image")
+		})
+	*/
+	log.Println("Initialised gui")
 	for {
 		select {
 		case <-exitC:
@@ -84,7 +112,7 @@ func startNuke() {
 }
 
 func gfxMain(win *glfw.Window, ctx *nk.Context, state *State) {
-
+	log.Println("Redraw")
 	maxVertexBuffer := 512 * 1024
 	maxElementBuffer := 128 * 1024
 
@@ -151,9 +179,24 @@ func ButtonBox(ctx *nk.Context) {
 		nk.NkGroupEnd(ctx)
 
 		nk.NkGroupBegin(ctx, "Group 2", nk.WindowBorder)
+		nk.NkLayoutRowStatic(ctx, 480, 480, 1)
+		{
+			/*withGlctx(func() {
+				pic, w, h := glim.LoadImage("test.png")
+				log.Println("Loaded image")
+				testim = load_nk_image(pic, w, h)
+				log.Println("Uploaded image")
+			})*/
+			//log.Println("Loading Image")
+			//h, _ := gfx.NewTextureFromFile("test.png", 480, 480)
+			//log.Println("Image loaded:", h.Handle)
+			nk.NkButtonImage(ctx, testim)
+			log.Println("Image displayed")
+			//Control the display
+		}
 		nk.NkLayoutRowDynamic(ctx, 10, 1)
 		{
-			//Control the display
+
 			nk.NkLayoutRowDynamic(ctx, 20, 3)
 			{
 

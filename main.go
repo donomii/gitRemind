@@ -1,6 +1,8 @@
 package main
 
 import (
+	//"github.com/cstegel/opengl-samples-golang/colors/gfx"
+
 	"flag"
 	"fmt"
 	"log"
@@ -9,15 +11,20 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
-	"strings"	
+	"strings"
 
+	"github.com/donomii/glim"
 	"github.com/donomii/goof"
 	"github.com/go-gl/glfw/v3.2/glfw"
 	"github.com/golang-ui/nuklear/nk"
-	"github.com/xlab/closer"
 	"github.com/rivo/tview"
+	"github.com/xlab/closer"
+
+	"golang.org/x/mobile/gl"
 )
 
+var testim nk.Image
+var glctx gl.Context
 var targetDir string
 var detailDisplay string = "Detail Disply Inital Value"
 var autoSync bool
@@ -39,6 +46,13 @@ type State struct {
 	bgColor nk.Color
 	prop    int32
 	opt     Option
+}
+
+func load_nk_image(data []uint8, w, h int) nk.Image {
+	log.Println("Uploading...")
+	tex := glim.UploadNewTex(glctx, data, w, h)
+	log.Println("upnt complete")
+	return nk.NkImageId(int32(tex.Value))
 }
 
 func worker(c chan string) {
@@ -169,6 +183,25 @@ func doScan() {
 	log.Println("Scan complete!")
 }
 
+func withGlctx(f func()) {
+	var worker gl.Worker
+	glctx, worker = gl.NewContext()
+	workAvailable := worker.WorkAvailable()
+	done := make(chan bool)
+	go func() {
+		f()
+		done <- true
+	}()
+	for {
+		select {
+		case <-workAvailable:
+			worker.DoWork()
+		case <-done:
+			return
+		}
+	}
+}
+
 func main() {
 	runtime.GOMAXPROCS(1)
 	runtime.LockOSThread()
@@ -187,6 +220,7 @@ func main() {
 		doui()
 	}
 	if gui {
+
 		startNuke()
 	}
 	fmt.Println("Done!")
