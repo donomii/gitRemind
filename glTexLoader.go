@@ -1,21 +1,22 @@
 package main
 
-	// From "github.com/cstegel/opengl-samples-golang/colors/gfx"
+// From "github.com/cstegel/opengl-samples-golang/colors/gfx"
 
 import (
-	"os"
 	"errors"
 	"image"
 	"image/draw"
-	_ "image/png"
 	_ "image/jpeg"
+	_ "image/png"
+	"log"
+	"os"
 
-	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/go-gl/gl/v3.2-core/gl"
 )
 
 type Texture struct {
-	Handle uint32
-	target uint32  // same target as gl.BindTexture(<this param>, ...)
+	Handle  uint32
+	target  uint32 // same target as gl.BindTexture(<this param>, ...)
 	texUnit uint32 // Texture unit that is currently bound to ex: gl.TEXTURE0
 }
 
@@ -40,25 +41,26 @@ func NewTextureFromFile(file string, wrapR, wrapS int32) (*Texture, error) {
 
 func NewTexture(img image.Image, wrapR, wrapS int32) (*Texture, error) {
 	rgba := image.NewRGBA(img.Bounds())
+	log.Printf("Image size: %+v\n", img.Bounds())
 	draw.Draw(rgba, rgba.Bounds(), img, image.Pt(0, 0), draw.Src)
-	if rgba.Stride != rgba.Rect.Size().X*4 {  // TODO-cs: why?
+	if rgba.Stride != rgba.Rect.Size().X*4 { // TODO-cs: why?
 		return nil, errUnsupportedStride
 	}
 
 	var handle uint32
 	gl.GenTextures(1, &handle)
 
-	target      := uint32(gl.TEXTURE_2D)
+	target := uint32(gl.TEXTURE_2D)
 	internalFmt := int32(gl.SRGB_ALPHA)
-	format      := uint32(gl.RGBA)
-	width       := int32(rgba.Rect.Size().X)
-	height      := int32(rgba.Rect.Size().Y)
-	pixType     := uint32(gl.UNSIGNED_BYTE)
-	dataPtr     := gl.Ptr(rgba.Pix)
+	format := uint32(gl.RGBA)
+	width := int32(rgba.Rect.Size().X)
+	height := int32(rgba.Rect.Size().Y)
+	pixType := uint32(gl.UNSIGNED_BYTE)
+	dataPtr := gl.Ptr(rgba.Pix)
 
 	texture := Texture{
-		Handle:handle,
-		target:target,
+		Handle: handle,
+		target: target,
 	}
 
 	texture.Bind(gl.TEXTURE0)
@@ -68,9 +70,8 @@ func NewTexture(img image.Image, wrapR, wrapS int32) (*Texture, error) {
 	// TODO-cs
 	gl.TexParameteri(texture.target, gl.TEXTURE_WRAP_R, wrapR)
 	gl.TexParameteri(texture.target, gl.TEXTURE_WRAP_S, wrapS)
-	gl.TexParameteri(texture.target, gl.TEXTURE_MIN_FILTER, gl.LINEAR)  // minification filter
-	gl.TexParameteri(texture.target, gl.TEXTURE_MAG_FILTER, gl.LINEAR)  // magnification filter
-
+	gl.TexParameteri(texture.target, gl.TEXTURE_MIN_FILTER, gl.LINEAR) // minification filter
+	gl.TexParameteri(texture.target, gl.TEXTURE_MAG_FILTER, gl.LINEAR) // magnification filter
 
 	gl.TexImage2D(target, 0, internalFmt, width, height, 0, format, pixType, dataPtr)
 
@@ -94,7 +95,7 @@ func (tex *Texture) SetUniform(uniformLoc int32) error {
 	if tex.texUnit == 0 {
 		return errTextureNotBound
 	}
-	gl.Uniform1i(uniformLoc, int32(tex.texUnit - gl.TEXTURE0))
+	gl.Uniform1i(uniformLoc, int32(tex.texUnit-gl.TEXTURE0))
 	return nil
 }
 

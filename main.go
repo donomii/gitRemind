@@ -12,7 +12,6 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/donomii/glim"
 	"github.com/donomii/goof"
 	"github.com/go-gl/glfw/v3.2/glfw"
 	"github.com/golang-ui/nuklear/nk"
@@ -47,12 +46,14 @@ type State struct {
 	opt     Option
 }
 
+/*
 func load_nk_image(data []uint8, w, h int) nk.Image {
 	log.Println("Uploading...")
 	tex := glim.UploadNewTex(glctx, data, w, h)
 	log.Println("upnt complete")
 	return nk.NkImageId(int32(tex.Value))
 }
+*/
 
 func worker(c chan string) {
 	var ahead_regex = regexp.MustCompile(`Your branch is ahead of`)
