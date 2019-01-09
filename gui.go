@@ -85,6 +85,63 @@ func startNuke() {
 		})
 	*/
 	log.Println("Initialised gui")
+
+	pane1 := func() {
+		if len(repos) > 0 {
+			for _, vv := range repos {
+				//node := vv.SubNodes[i]
+				name := vv[0]
+
+				if nk.NkButtonLabel(ctx, name) > 0 {
+					targetDir = name
+					detailDisplay = "Conditions\n-----\n" + vv[4] + "\n\nFiles\n-----\n" + vv[1] + "\nDiff\n----\n" + vv[2]
+				}
+			}
+		} else {
+
+			if 0 < nk.NkButtonLabel(ctx, "No repos found, click to open a directory") {
+
+			}
+		}
+
+		if 0 < nk.NkButtonLabel(ctx, "Change directory") {
+
+		}
+
+		if 0 < nk.NkButtonLabel(ctx, "Exit") {
+
+			os.Exit(0)
+		}
+
+	}
+
+	pane2 := func() {
+		nk.NkLayoutRowDynamic(ctx, 20, 3)
+		{
+
+			if 0 < nk.NkButtonLabel(ctx, "Pull") {
+				Pull(targetDir)
+			}
+
+			if 0 < nk.NkButtonLabel(ctx, "Commit - Push") {
+				CommitPush(targetDir)
+
+			}
+
+			if 0 < nk.NkButtonLabel(ctx, "Sync") {
+
+			}
+
+		}
+		nk.NkLayoutRowDynamic(ctx, 10, 1)
+		{
+			results := strings.Split(detailDisplay, "\n")
+			for _, v := range results {
+				//nk.NkLabel(ctx, v, nk.WindowBorder)
+				nk.NkLabel(ctx, v, nk.TextLeft)
+			}
+		}
+	}
 	for {
 		select {
 		case <-exitC:
@@ -102,14 +159,14 @@ func startNuke() {
 			state := &State{
 				bgColor: nk.NkRgba(28, 48, 62, 255),
 			}
-			gfxMain(win, ctx, state)
+			ClassicEmail3Pane(win, ctx, state, pane1, pane2)
 		}
 	}
 
 	//End Nuklear
 }
 
-func gfxMain(win *glfw.Window, ctx *nk.Context, state *State) {
+func ClassicEmail3Pane(win *glfw.Window, ctx *nk.Context, state *State, pane1, pane2 func()) {
 	//log.Println("Redraw")
 	maxVertexBuffer := 512 * 1024
 	maxElementBuffer := 128 * 1024
@@ -125,7 +182,7 @@ func gfxMain(win *glfw.Window, ctx *nk.Context, state *State) {
 
 	if update > 0 {
 
-		ButtonBox(ctx)
+		ButtonBox(ctx, pane1, pane2)
 		nk.NkLayoutRowStatic(ctx, 480, 480, 1)
 		{
 			/*withGlctx(func() {
@@ -155,38 +212,14 @@ func gfxMain(win *glfw.Window, ctx *nk.Context, state *State) {
 	win.SwapBuffers()
 }
 
-func ButtonBox(ctx *nk.Context) {
+func ButtonBox(ctx *nk.Context, pane1, pane2 func()) {
 
 	nk.NkLayoutRowDynamic(ctx, 400, 2)
 	{
 		nk.NkGroupBegin(ctx, "Group 1", nk.WindowBorder)
 		nk.NkLayoutRowDynamic(ctx, 20, 1)
 		{
-			if len(repos) > 0 {
-				for _, vv := range repos {
-					//node := vv.SubNodes[i]
-					name := vv[0]
-
-					if nk.NkButtonLabel(ctx, name) > 0 {
-						targetDir = name
-						detailDisplay = "Conditions\n-----\n" + vv[4] + "\n\nFiles\n-----\n" + vv[1] + "\nDiff\n----\n" + vv[2]
-					}
-				}
-			} else {
-
-				if 0 < nk.NkButtonLabel(ctx, "No repos found, click to open a directory") {
-
-				}
-			}
-
-			if 0 < nk.NkButtonLabel(ctx, "Change directory") {
-
-			}
-
-			if 0 < nk.NkButtonLabel(ctx, "Exit") {
-
-				os.Exit(0)
-			}
+			pane1()
 		}
 		nk.NkGroupEnd(ctx)
 
@@ -195,31 +228,7 @@ func ButtonBox(ctx *nk.Context) {
 		nk.NkLayoutRowDynamic(ctx, 10, 1)
 		{
 
-			nk.NkLayoutRowDynamic(ctx, 20, 3)
-			{
-
-				if 0 < nk.NkButtonLabel(ctx, "Pull") {
-					Pull(targetDir)
-				}
-
-				if 0 < nk.NkButtonLabel(ctx, "Commit - Push") {
-					CommitPush(targetDir)
-
-				}
-
-				if 0 < nk.NkButtonLabel(ctx, "Sync") {
-
-				}
-
-			}
-			nk.NkLayoutRowDynamic(ctx, 10, 1)
-			{
-				results := strings.Split(detailDisplay, "\n")
-				for _, v := range results {
-					//nk.NkLabel(ctx, v, nk.WindowBorder)
-					nk.NkLabel(ctx, v, nk.TextLeft)
-				}
-			}
+			pane2()
 		}
 		nk.NkGroupEnd(ctx)
 	}
