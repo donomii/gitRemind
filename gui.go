@@ -143,7 +143,10 @@ func startNuke() {
 		}
 	}
 	pane3 := func() {
-		nk.NkButtonImage(ctx, testim)
+		nk.NkLayoutRowStatic(ctx, 480, 480, 1)
+		{
+			nk.NkButtonImage(ctx, testim)
+		}
 	}
 	for {
 		select {
@@ -163,6 +166,7 @@ func startNuke() {
 				bgColor: nk.NkRgba(28, 48, 62, 255),
 			}
 			ClassicEmail3Pane(win, ctx, state, pane1, pane2, pane3)
+			//TkRatWin(win, ctx, state, pane1, pane2, pane3)
 		}
 	}
 
@@ -184,24 +188,8 @@ func ClassicEmail3Pane(win *glfw.Window, ctx *nk.Context, state *State, pane1, p
 	nk.NkWindowSetSize(ctx, "GitRemind", nk.NkVec2(float32(winWidth), float32(winHeight)))
 
 	if update > 0 {
-
 		ButtonBox(ctx, pane1, pane2)
-		nk.NkLayoutRowStatic(ctx, 480, 480, 1)
-		{
-			/*withGlctx(func() {
-				pic, w, h := glim.LoadImage("test.png")
-				log.Println("Loaded image")
-				testim = load_nk_image(pic, w, h)
-				log.Println("Uploaded image")
-			})*/
-			//log.Println("Loading Image")
-			//h, _ := gfx.NewTextureFromFile("test.png", 480, 480)
-			//log.Println("Image loaded:", h.Handle)
-			pane3()
-
-			//log.Println("Image displayed")
-			//Control the display
-		}
+		pane3()
 	}
 	nk.NkEnd(ctx)
 
@@ -236,4 +224,49 @@ func ButtonBox(ctx *nk.Context, pane1, pane2 func()) {
 		}
 		nk.NkGroupEnd(ctx)
 	}
+}
+
+func TkRatWin(win *glfw.Window, ctx *nk.Context, state *State, menu1, pane1, pane2 func()) {
+	//log.Println("Redraw")
+	maxVertexBuffer := 512 * 1024
+	maxElementBuffer := 128 * 1024
+
+	nk.NkPlatformNewFrame()
+
+	// Layout
+	bounds := nk.NkRect(50, 50, 230, 250)
+	update := nk.NkBegin(ctx, "GitRemind", bounds,
+		nk.WindowBorder|nk.WindowMovable|nk.WindowScalable|nk.WindowMinimizable|nk.WindowTitle)
+	update = 1
+	nk.NkWindowSetPosition(ctx, "GitRemind", nk.NkVec2(0, 0))
+	nk.NkWindowSetSize(ctx, "GitRemind", nk.NkVec2(float32(winWidth), float32(winHeight)))
+
+	if update > 0 {
+
+		/*withGlctx(func() {
+			pic, w, h := glim.LoadImage("test.png")
+			log.Println("Loaded image")
+			testim = load_nk_image(pic, w, h)
+			log.Println("Uploaded image")
+		})*/
+		//log.Println("Loading Image")
+		//h, _ := gfx.NewTextureFromFile("test.png", 480, 480)
+		//log.Println("Image loaded:", h.Handle)
+		menu1()
+		pane1()
+
+		pane2()
+
+	}
+	nk.NkEnd(ctx)
+
+	// Render
+	bg := make([]float32, 4)
+	nk.NkColorFv(bg, state.bgColor)
+	width, height := win.GetSize()
+	gl.Viewport(0, 0, int32(width), int32(height))
+	gl.Clear(gl.COLOR_BUFFER_BIT)
+	gl.ClearColor(bg[0], bg[1], bg[2], bg[3])
+	nk.NkPlatformRender(nk.AntiAliasingOn, maxVertexBuffer, maxElementBuffer)
+	win.SwapBuffers()
 }
