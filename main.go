@@ -1,7 +1,6 @@
 package main
 
 import (
-	//"github.com/cstegel/opengl-samples-golang/colors/gfx"
 
 	"flag"
 	"fmt"

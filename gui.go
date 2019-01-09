@@ -10,8 +10,6 @@ import (
 
 	//"unsafe"
 
-	"github.com/cstegel/opengl-samples-golang/colors/gfx"
-
 	_ "image/jpeg"
 	_ "image/png"
 
@@ -72,7 +70,7 @@ func startNuke() {
 	fpsTicker := time.NewTicker(time.Second / 30)
 
 	log.Println("Loading Image")
-	h, err := gfx.NewTextureFromFile("test.png", 480, 480)
+	h, err := NewTextureFromFile("test.png", 480, 480)
 	log.Println("Image loaded:", h.Handle, err)
 	testim = nk.NkImageId(int32(h.Handle))
 	/*
@@ -128,7 +126,21 @@ func gfxMain(win *glfw.Window, ctx *nk.Context, state *State) {
 	if update > 0 {
 
 		ButtonBox(ctx)
-
+		nk.NkLayoutRowStatic(ctx, 480, 480, 1)
+		{
+			/*withGlctx(func() {
+				pic, w, h := glim.LoadImage("test.png")
+				log.Println("Loaded image")
+				testim = load_nk_image(pic, w, h)
+				log.Println("Uploaded image")
+			})*/
+			//log.Println("Loading Image")
+			//h, _ := gfx.NewTextureFromFile("test.png", 480, 480)
+			//log.Println("Image loaded:", h.Handle)
+			nk.NkButtonImage(ctx, testim)
+			log.Println("Image displayed")
+			//Control the display
+		}
 	}
 	nk.NkEnd(ctx)
 
@@ -179,21 +191,7 @@ func ButtonBox(ctx *nk.Context) {
 		nk.NkGroupEnd(ctx)
 
 		nk.NkGroupBegin(ctx, "Group 2", nk.WindowBorder)
-		nk.NkLayoutRowStatic(ctx, 480, 480, 1)
-		{
-			/*withGlctx(func() {
-				pic, w, h := glim.LoadImage("test.png")
-				log.Println("Loaded image")
-				testim = load_nk_image(pic, w, h)
-				log.Println("Uploaded image")
-			})*/
-			//log.Println("Loading Image")
-			//h, _ := gfx.NewTextureFromFile("test.png", 480, 480)
-			//log.Println("Image loaded:", h.Handle)
-			nk.NkButtonImage(ctx, testim)
-			log.Println("Image displayed")
-			//Control the display
-		}
+
 		nk.NkLayoutRowDynamic(ctx, 10, 1)
 		{
 
