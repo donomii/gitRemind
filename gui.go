@@ -69,10 +69,6 @@ func startNuke() {
 
 	fpsTicker := time.NewTicker(time.Second / 30)
 
-	log.Println("Loading Image")
-	h, err := NewTextureFromFile("test.png", 480, 480)
-	log.Println("Image loaded:", h.Handle, err)
-	testim = nk.NkImageId(int32(h.Handle))
 	/*
 		withGlctx(func() {
 			pic, w, h := glim.LoadImage("test.png")
@@ -145,7 +141,7 @@ func startNuke() {
 	pane3 := func() {
 		nk.NkLayoutRowStatic(ctx, 480, 480, 1)
 		{
-			nk.NkButtonImage(ctx, testim)
+			//nk.NkButtonImage(ctx, testim)
 		}
 	}
 	for {

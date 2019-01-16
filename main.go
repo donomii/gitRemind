@@ -1,7 +1,6 @@
 package main
 
 import (
-
 	"flag"
 	"fmt"
 	"log"
@@ -21,7 +20,6 @@ import (
 	"golang.org/x/mobile/gl"
 )
 
-var testim nk.Image
 var glctx gl.Context
 var targetDir string
 var detailDisplay string = "Detail Disply Inital Value"
