@@ -2,12 +2,18 @@ package screens
 
 import (
 	"fmt"
+	"strings"
 
 	"fyne.io/fyne"
 	//"fyne.io/fyne/dialog"
+	"os"
+
 	"fyne.io/fyne/layout"
 	"fyne.io/fyne/widget"
+	"github.com/donomii/goof"
 )
+
+var targetDir = ""
 
 func confirmCallback(response bool) {
 	fmt.Println("Responded with", response)
@@ -16,26 +22,39 @@ func confirmCallback(response bool) {
 // DialogScreen loads a panel that lists the dialog windows that can be tested.
 func DialogScreen(win fyne.Window, repos [][]string) fyne.CanvasObject {
 
-	largeText := widget.NewMultiLineEntry()
-	form := &widget.Form{
-		OnCancel: func() {
-			fmt.Println("Cancelled")
-		},
-		OnSubmit: func() {
+	top := makeCell()
+	bottom := makeCell()
+	left := makeCell()
+	right := makeCell()
 
-			fmt.Println("Message:", largeText.Text)
-		},
-	}
-	form.Append("Message", largeText)
+	largeText := widget.NewLabel("")
 
-	diffs := widget.NewGroup("Diff", form)
-	diffPanel := widget.NewVBox(diffs)
+	//form := &widget.Form{}
+	//form.Append("Message", largeText)
+	diffs := widget.NewGroupWithScroller("Diff", largeText)
+	middle := diffs
+
+	borderLayout := layout.NewBorderLayout(top, bottom, left, right)
+
+	pull_Button := widget.NewButton("Pull", func() {
+		Pull(targetDir)
+	})
+
+	commit_Push_Button := widget.NewButton("Commit - Push", func() {
+		CommitPush(targetDir)
+	})
+
+	gitControls := widget.NewGroup("Git", pull_Button, commit_Push_Button)
+	diffCon := fyne.NewContainerWithLayout(borderLayout,
+		top, bottom, left, right, middle)
+	//diffPanel := fyne.NewContainerWithLayout(diffLayout, borderLayout, gitControls)
 	buttons := []fyne.CanvasObject{}
 	for _, r := range repos {
 		name := r[0]
-		text := r[1]
+		detailDisplay := "Conditions\n-----\n" + r[4] + "\n\nFiles\n-----\n" + r[1] + "\nDiff\n----\n" + r[2]
+		detailDisplay = strings.Replace(detailDisplay, "\t", "   ", -1)
 		b := widget.NewButton(name, func() {
-			largeText.SetText(text)
+			largeText.SetText(detailDisplay)
 		})
 		buttons = append(buttons, b)
 	}
@@ -43,7 +62,25 @@ func DialogScreen(win fyne.Window, repos [][]string) fyne.CanvasObject {
 	//buttons = append(buttons, form)
 	dialogs := widget.NewGroup("Dialogs", buttons...)
 
-	windows := widget.NewVBox(dialogs)
+	windows := widget.NewVBox(dialogs, gitControls)
 
-	return fyne.NewContainerWithLayout(layout.NewAdaptiveGridLayout(2), windows, diffPanel)
+	return fyne.NewContainerWithLayout(layout.NewAdaptiveGridLayout(2), windows, diffCon)
+}
+
+func CommitPush(targetDir string) {
+	cwd, _ := os.Getwd()
+
+	os.Chdir(targetDir)
+	fmt.Printf("%v\n", []string{"git", "commit", "-a"})
+	goof.QCI([]string{"git", "commit", "-a"})
+	goof.QCI([]string{"git", "push"})
+	os.Chdir(cwd)
+}
+
+func Pull(targetDir string) {
+	cwd, _ := os.Getwd()
+
+	os.Chdir(targetDir)
+	goof.QCI([]string{"git", "pull"})
+	os.Chdir(cwd)
 }

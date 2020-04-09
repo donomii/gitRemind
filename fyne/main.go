@@ -31,7 +31,7 @@ var autoSync bool
 
 func welcomeScreen(a fyne.App) fyne.CanvasObject {
 	logo := canvas.NewImageFromResource(data.FyneScene)
-	logo.SetMinSize(fyne.NewSize(228, 167))
+	logo.SetMinSize(fyne.NewSize(800, 600))
 
 	link, err := url.Parse("https://fyne.io/")
 	if err != nil {
@@ -76,11 +76,11 @@ func main() {
 	w.SetMaster()
 
 	tabs := widget.NewTabContainer(
-
 		widget.NewTabItemWithIcon("Repos", theme.ViewFullScreenIcon(), screens.DialogScreen(w, repos)))
 	tabs.SetTabLocation(widget.TabLocationLeading)
 	tabs.SelectTabIndex(a.Preferences().Int(preferenceCurrentTab))
 	w.SetContent(tabs)
+	w.Resize(fyne.NewSize(800, 600))
 
 	w.ShowAndRun()
 	a.Preferences().SetInt(preferenceCurrentTab, tabs.CurrentTabIndex())
@@ -129,24 +129,6 @@ func grep(str string) string {
 		}
 	}
 	return out
-}
-
-func CommitPush(targetDir string) {
-	cwd, _ := os.Getwd()
-
-	os.Chdir(targetDir)
-	fmt.Printf("%v\n", []string{"git", "commit", "-a"})
-	goof.QCI([]string{"git", "commit", "-a"})
-	goof.QCI([]string{"git", "push"})
-	os.Chdir(cwd)
-}
-
-func Pull(targetDir string) {
-	cwd, _ := os.Getwd()
-
-	os.Chdir(targetDir)
-	goof.QCI([]string{"git", "pull"})
-	os.Chdir(cwd)
 }
 
 func worker(c chan string) {
