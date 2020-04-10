@@ -81,6 +81,7 @@ func Show(app fyne.App) *textEdit {
 	status := widget.NewHBox(layout.NewSpacer(),
 		widget.NewButton("Commit", func() {
 			CommitWithMessagePush(editor.targetDir, editor.entry.Text)
+			window.Close()
 		}),
 		widget.NewButton("Cancel", func() { window.Close() }))
 	content := fyne.NewContainerWithLayout(layout.NewBorderLayout(toolbar, status, nil, nil),
