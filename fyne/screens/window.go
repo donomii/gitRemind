@@ -10,17 +10,19 @@ import (
 
 	"fyne.io/fyne/layout"
 	"fyne.io/fyne/widget"
+	"github.com/donomii/gitremind/fyne/textedit"
 	"github.com/donomii/goof"
 )
 
 var targetDir = ""
+var commitMessage string
 
 func confirmCallback(response bool) {
 	fmt.Println("Responded with", response)
 }
 
 // DialogScreen loads a panel that lists the dialog windows that can be tested.
-func DialogScreen(win fyne.Window, repos [][]string) fyne.CanvasObject {
+func DialogScreen(win fyne.Window, a fyne.App, repos [][]string) fyne.CanvasObject {
 
 	top := makeCell()
 	bottom := makeCell()
@@ -41,7 +43,9 @@ func DialogScreen(win fyne.Window, repos [][]string) fyne.CanvasObject {
 	})
 
 	commit_Push_Button := widget.NewButton("Commit - Push", func() {
-		CommitPush(targetDir)
+		editor := textedit.Show(a)
+		editor.SetText(commitMessage)
+
 	})
 
 	gitControls := widget.NewGroup("Git", pull_Button, commit_Push_Button)
@@ -53,6 +57,7 @@ func DialogScreen(win fyne.Window, repos [][]string) fyne.CanvasObject {
 		name := r[0]
 		detailDisplay := "Conditions\n-----\n" + r[4] + "\n\nFiles\n-----\n" + r[1] + "\nDiff\n----\n" + r[2]
 		detailDisplay = strings.Replace(detailDisplay, "\t", "   ", -1)
+		commitMessage = "\n#" + strings.Replace(r[5], "\n", "\n#", -1)
 		b := widget.NewButton(name, func() {
 			largeText.SetText(detailDisplay)
 		})
@@ -60,7 +65,7 @@ func DialogScreen(win fyne.Window, repos [][]string) fyne.CanvasObject {
 	}
 
 	//buttons = append(buttons, form)
-	dialogs := widget.NewGroup("Dialogs", buttons...)
+	dialogs := widget.NewGroup("Repositories", buttons...)
 
 	windows := widget.NewVBox(dialogs, gitControls)
 

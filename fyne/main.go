@@ -61,10 +61,10 @@ func welcomeScreen(a fyne.App) fyne.CanvasObject {
 func main() {
 	verbose = true
 	doScan()
-	a := app.NewWithID("io.fyne.demo")
+	a := app.NewWithID("com.praeceptamachinae.com")
 	a.SetIcon(theme.FyneLogo())
 
-	w := a.NewWindow("Fyne Demo")
+	w := a.NewWindow("Git Remind")
 	w.SetMainMenu(fyne.NewMainMenu(fyne.NewMenu("File",
 		fyne.NewMenuItem("New", func() { fmt.Println("Menu New") }),
 		// a quit item will be appended to our first menu
@@ -76,7 +76,7 @@ func main() {
 	w.SetMaster()
 
 	tabs := widget.NewTabContainer(
-		widget.NewTabItemWithIcon("Repos", theme.ViewFullScreenIcon(), screens.DialogScreen(w, repos)))
+		widget.NewTabItemWithIcon("Repos", theme.ViewFullScreenIcon(), screens.DialogScreen(w, a, repos)))
 	tabs.SetTabLocation(widget.TabLocationLeading)
 	tabs.SelectTabIndex(a.Preferences().Int(preferenceCurrentTab))
 	w.SetContent(tabs)
@@ -106,7 +106,7 @@ func doScan() {
 func scanRepos(c chan string) {
 	var git_regex = regexp.MustCompile(`\.git`)
 	walkHandler := func(path string, info os.FileInfo, err error) error {
-		fmt.Println(path)
+		//fmt.Println(path)
 
 		if !git_regex.MatchString(path) {
 
@@ -183,7 +183,7 @@ func worker(c chan string) {
 			}
 			if len(reasons) > 0 {
 				fmt.Printf("%v: %v\n", path, strings.Join(longreasons, ", "))
-				repos = append(repos, []string{path, shortresult, grep(diffresult), strings.Join(reasons, ", "), strings.Join(longreasons, ", ")})
+				repos = append(repos, []string{path, shortresult, grep(diffresult), strings.Join(reasons, ", "), strings.Join(longreasons, ", "), result})
 				if verbose {
 					fmt.Println(result)
 					fmt.Printf("\n\n\n\n\n")
