@@ -2,6 +2,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"net/url"
@@ -28,6 +29,8 @@ const preferenceCurrentTab = "currentTab"
 
 var verbose bool
 var autoSync bool
+var gui bool
+var scanDir string = "."
 
 func welcomeScreen(a fyne.App) fyne.CanvasObject {
 	logo := canvas.NewImageFromResource(data.FyneScene)
@@ -59,8 +62,23 @@ func welcomeScreen(a fyne.App) fyne.CanvasObject {
 }
 
 func main() {
-	verbose = true
+
+	flag.BoolVar(&autoSync, "auto-sync", false, "Automatically push then pull on clean repositories")
+	flag.BoolVar(&gui, "gui", false, "Experimental graphical user interface")
+	flag.BoolVar(&verbose, "verbose", false, "Print details while working")
+	flag.Parse()
+	if len(flag.Args()) > 0 {
+		scanDir = flag.Arg(0)
+	}
 	doScan()
+	if gui {
+
+		doGui()
+	}
+
+}
+
+func doGui() {
 	a := app.NewWithID("com.praeceptamachinae.com")
 	a.SetIcon(theme.FyneLogo())
 
@@ -116,7 +134,7 @@ func scanRepos(c chan string) {
 		return nil
 	}
 	//fmt.Println("These repositories need some attention:")
-	filepath.Walk(".", walkHandler)
+	filepath.Walk(scanDir, walkHandler)
 	close(c)
 }
 
