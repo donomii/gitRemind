@@ -1,57 +1,135 @@
+// Package main provides various examples of Fyne API capabilities
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"runtime"
+
 	"strings"
 
 	"github.com/donomii/goof"
-	"github.com/go-gl/glfw/v3.2/glfw"
-	"github.com/golang-ui/nuklear/nk"
-	"github.com/rivo/tview"
-	"github.com/xlab/closer"
 
-	"golang.org/x/mobile/gl"
+	"fyne.io/fyne"
+	"fyne.io/fyne/app"
+	"fyne.io/fyne/canvas"
+	"fyne.io/fyne/cmd/fyne_demo/data"
+	"fyne.io/fyne/layout"
+	"fyne.io/fyne/theme"
+	"fyne.io/fyne/widget"
+	"github.com/donomii/gitremind/screens"
 )
 
-var glctx gl.Context
-var targetDir string
-var detailDisplay string = "Detail Disply Inital Value"
-var autoSync bool
-var ui bool
-var gui bool
+const preferenceCurrentTab = "currentTab"
+
 var verbose bool
-var repos [][]string
-var lastSelect string
-var app *tview.Application
+var autoSync bool
+
+func welcomeScreen(a fyne.App) fyne.CanvasObject {
+	logo := canvas.NewImageFromResource(data.FyneScene)
+	logo.SetMinSize(fyne.NewSize(800, 600))
+
+	link, err := url.Parse("https://fyne.io/")
+	if err != nil {
+		fyne.LogError("Could not parse URL", err)
+	}
+
+	return widget.NewVBox(
+		widget.NewLabelWithStyle("Welcome to the Fyne toolkit demo app", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+		layout.NewSpacer(),
+		widget.NewHBox(layout.NewSpacer(), logo, layout.NewSpacer()),
+		widget.NewHyperlinkWithStyle("fyne.io", link, fyne.TextAlignCenter, fyne.TextStyle{}),
+		layout.NewSpacer(),
+
+		widget.NewGroup("Theme",
+			fyne.NewContainerWithLayout(layout.NewGridLayout(2),
+				widget.NewButton("Dark", func() {
+					a.Settings().SetTheme(theme.DarkTheme())
+				}),
+				widget.NewButton("Light", func() {
+					a.Settings().SetTheme(theme.LightTheme())
+				}),
+			),
+		),
+	)
+}
+
+func main() {
+	verbose = true
+	doScan()
+	a := app.NewWithID("com.praeceptamachinae.com")
+	a.SetIcon(theme.FyneLogo())
+
+	w := a.NewWindow("Git Remind")
+	w.SetMainMenu(fyne.NewMainMenu(fyne.NewMenu("File",
+		fyne.NewMenuItem("New", func() { fmt.Println("Menu New") }),
+		// a quit item will be appended to our first menu
+	), fyne.NewMenu("Edit",
+		fyne.NewMenuItem("Cut", func() { fmt.Println("Menu Cut") }),
+		fyne.NewMenuItem("Copy", func() { fmt.Println("Menu Copy") }),
+		fyne.NewMenuItem("Paste", func() { fmt.Println("Menu Paste") }),
+	)))
+	w.SetMaster()
+
+	tabs := widget.NewTabContainer(
+		widget.NewTabItemWithIcon("Repos", theme.ViewFullScreenIcon(), screens.DialogScreen(w, a, repos)))
+	tabs.SetTabLocation(widget.TabLocationLeading)
+	tabs.SelectTabIndex(a.Preferences().Int(preferenceCurrentTab))
+	w.SetContent(tabs)
+	w.Resize(fyne.NewSize(800, 600))
+
+	w.ShowAndRun()
+	a.Preferences().SetInt(preferenceCurrentTab, tabs.CurrentTabIndex())
+}
+
 var workerChan chan string
 var doneChan chan bool
 
-var winWidth = 900
-var winHeight = 900
+var repos [][]string
 
-type Option uint8
+func doScan() {
+	log.Println("Starting scan")
+	workerChan = make(chan string, 10)
+	doneChan = make(chan bool)
+	go worker(workerChan)
+	scanRepos(workerChan)
+	<-doneChan
+	close(doneChan)
 
-type State struct {
-	bgColor nk.Color
-	prop    int32
-	opt     Option
+	log.Println("Scan complete!")
 }
 
-/*
-func load_nk_image(data []uint8, w, h int) nk.Image {
-	log.Println("Uploading...")
-	tex := glim.UploadNewTex(glctx, data, w, h)
-	log.Println("upnt complete")
-	return nk.NkImageId(int32(tex.Value))
+func scanRepos(c chan string) {
+	var git_regex = regexp.MustCompile(`\.git`)
+	walkHandler := func(path string, info os.FileInfo, err error) error {
+		//fmt.Println(path)
+
+		if !git_regex.MatchString(path) {
+
+			c <- path
+
+		}
+		return nil
+	}
+	//fmt.Println("These repositories need some attention:")
+	filepath.Walk(".", walkHandler)
+	close(c)
 }
-*/
+
+func grep(str string) string {
+	var out string
+	strs := strings.Split(str, "\n")
+	for _, v := range strs {
+		if strings.Index(v, "+") == 0 || strings.Index(v, "-") == 0 {
+			out = out + v + "\n"
+		}
+	}
+	return out
+}
 
 func worker(c chan string) {
 	var ahead_regex = regexp.MustCompile(`Your branch is ahead of`)
@@ -105,7 +183,7 @@ func worker(c chan string) {
 			}
 			if len(reasons) > 0 {
 				fmt.Printf("%v: %v\n", path, strings.Join(longreasons, ", "))
-				repos = append(repos, []string{path, shortresult, grep(diffresult), strings.Join(reasons, ", "), strings.Join(longreasons, ", ")})
+				repos = append(repos, []string{path, shortresult, grep(diffresult), strings.Join(reasons, ", "), strings.Join(longreasons, ", "), result})
 				if verbose {
 					fmt.Println(result)
 					fmt.Printf("\n\n\n\n\n")
@@ -123,107 +201,4 @@ func worker(c chan string) {
 		os.Chdir(cwd)
 	}
 	doneChan <- true
-}
-
-func grep(str string) string {
-	var out string
-	strs := strings.Split(str, "\n")
-	for _, v := range strs {
-		if strings.Index(v, "+") == 0 || strings.Index(v, "-") == 0 {
-			out = out + v + "\n"
-		}
-	}
-	return out
-}
-
-func CommitPush(targetDir string) {
-	cwd, _ := os.Getwd()
-
-	os.Chdir(targetDir)
-	fmt.Printf("%v\n", []string{"git", "commit", "-a"})
-	goof.QCI([]string{"git", "commit", "-a"})
-	goof.QCI([]string{"git", "push"})
-	os.Chdir(cwd)
-}
-
-func Pull(targetDir string) {
-	cwd, _ := os.Getwd()
-
-	os.Chdir(targetDir)
-	goof.QCI([]string{"git", "pull"})
-	os.Chdir(cwd)
-}
-
-func scanRepos(c chan string) {
-	var git_regex = regexp.MustCompile(`\.git`)
-	walkHandler := func(path string, info os.FileInfo, err error) error {
-
-		if !git_regex.MatchString(path) {
-
-			c <- path
-
-		}
-		return nil
-	}
-	//fmt.Println("These repositories need some attention:")
-	filepath.Walk(".", walkHandler)
-	close(c)
-}
-
-func doScan() {
-	workerChan = make(chan string, 10)
-	doneChan = make(chan bool)
-	go worker(workerChan)
-	scanRepos(workerChan)
-	<-doneChan
-	close(doneChan)
-
-	log.Println("Scan complete!")
-}
-
-func withGlctx(f func()) {
-	var worker gl.Worker
-	glctx, worker = gl.NewContext()
-	workAvailable := worker.WorkAvailable()
-	done := make(chan bool)
-	go func() {
-		f()
-		done <- true
-	}()
-	for {
-		select {
-		case <-workAvailable:
-			worker.DoWork()
-		case <-done:
-			return
-		}
-	}
-}
-
-func main() {
-	runtime.GOMAXPROCS(1)
-	runtime.LockOSThread()
-	if err := glfw.Init(); err != nil {
-		closer.Fatalln(err)
-	}
-	flag.BoolVar(&autoSync, "auto-sync", false, "Automatically push then pull on clean repositories")
-	flag.BoolVar(&ui, "ui", false, "Experimental graphical user interface")
-	flag.BoolVar(&gui, "gui", false, "Experimental graphical user interface")
-	flag.BoolVar(&verbose, "verbose", false, "Print details while working")
-	flag.Parse()
-
-	doScan()
-
-	if ui {
-		doui()
-	}
-	if gui {
-
-		startNuke()
-	}
-	fmt.Println("Done!")
-}
-
-func QuickFileEditor(ctx *nk.Context) {
-
 }

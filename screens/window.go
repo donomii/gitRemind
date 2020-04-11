@@ -10,7 +10,7 @@ import (
 
 	"fyne.io/fyne/layout"
 	"fyne.io/fyne/widget"
-	"github.com/donomii/gitremind/fyne/textedit"
+	"github.com/donomii/gitremind/textedit"
 	"github.com/donomii/goof"
 )
 
