@@ -3,9 +3,7 @@
 # gitRemind
 Searches your drive for git repositories, and tells you if they need to be committed or pushed.
 
-I have a lot of git repositories, and I often work on them when I'm not connected to the internet, e.g. on a plane.  Then I forget to upload my changes, and end up with merge conflicts or missing work.  So I wrote gitRemind to check all my repositories and remind me to sync them.
-
-GitRemind now features two experimental user interfaces.  One text mode, and one graphical.
+I have a lot of git repositories, and I at the end of the night I have 10 or more repositories to update.  Then I forget to upload my changes, and end up with merge conflicts or missing work.  So I wrote gitRemind to check all my repositories and remind me to sync them.
 
 # Building
 
@@ -14,8 +12,6 @@ GitRemind now features two experimental user interfaces.  One text mode, and one
 # Use
 
     ./gitRemind
-    
-    ./gitRemind --ui
     
     ./gitRemind --gui
 
