@@ -43,9 +43,8 @@ func DialogScreen(win fyne.Window, a fyne.App, repos [][]string) fyne.CanvasObje
 	})
 
 	commit_Push_Button := widget.NewButton("Commit - Push", func() {
-		editor := textedit.Show(a)
+		editor := textedit.Show(a, targetDir)
 		editor.SetText(commitMessage)
-
 	})
 
 	gitControls := widget.NewGroup("Git", pull_Button, commit_Push_Button)

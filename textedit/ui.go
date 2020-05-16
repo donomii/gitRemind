@@ -62,8 +62,8 @@ func (e *textEdit) buildToolbar() *widget.Toolbar {
 }
 
 // Show loads a new text editor
-func Show(app fyne.App) *textEdit {
-	window := app.NewWindow("Text Editor")
+func Show(app fyne.App, targetDir string) *textEdit {
+	window := app.NewWindow("Commit Message")
 	window.SetIcon(icon.TextEditorBitmap)
 
 	entry := widget.NewMultiLineEntry()
@@ -75,6 +75,7 @@ func Show(app fyne.App) *textEdit {
 		cursorCol: cursorCol,
 		entry:     entry,
 		window:    window,
+		targetDir: targetDir,
 	}
 
 	toolbar := editor.buildToolbar()
@@ -112,6 +113,8 @@ func Show(app fyne.App) *textEdit {
 
 func CommitWithMessagePush(targetDir, message string) {
 	cwd, _ := os.Getwd()
+	fmt.Println("Current directory", cwd)
+	fmt.Println("Target directory", targetDir)
 
 	os.Chdir(targetDir)
 	fmt.Printf("%v\n", []string{"git", "commit", "-a"})
