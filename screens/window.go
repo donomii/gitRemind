@@ -14,8 +14,8 @@ import (
 	"github.com/donomii/goof"
 )
 
-var targetDir = ""
 var commitMessage string
+var targetDir string
 
 func confirmCallback(response bool) {
 	fmt.Println("Responded with", response)
@@ -54,11 +54,13 @@ func DialogScreen(win fyne.Window, a fyne.App, repos [][]string) fyne.CanvasObje
 	buttons := []fyne.CanvasObject{}
 	for _, r := range repos {
 		name := r[0]
+		path := r[0]
 		detailDisplay := "Conditions\n-----\n" + r[4] + "\n\nFiles\n-----\n" + r[1] + "\nDiff\n----\n" + r[2]
 		detailDisplay = strings.Replace(detailDisplay, "\t", "   ", -1)
 		commitMessage = "\n#" + strings.Replace(r[5], "\n", "\n#", -1)
 		b := widget.NewButton(name, func() {
 			largeText.SetText(detailDisplay)
+			targetDir = path
 		})
 		buttons = append(buttons, b)
 	}

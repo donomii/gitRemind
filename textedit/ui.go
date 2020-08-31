@@ -3,6 +3,7 @@ package textedit
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/donomii/goof"
 
@@ -61,7 +62,7 @@ func (e *textEdit) buildToolbar() *widget.Toolbar {
 		}))
 }
 
-// Show loads a new text editor
+// Show loads a new text editor for the user to type a commit message into
 func Show(app fyne.App, targetDir string) *textEdit {
 	window := app.NewWindow("Commit Message")
 	window.SetIcon(icon.TextEditorBitmap)
@@ -79,14 +80,15 @@ func Show(app fyne.App, targetDir string) *textEdit {
 	}
 
 	toolbar := editor.buildToolbar()
-	status := widget.NewHBox(layout.NewSpacer(),
+	buttonBox := widget.NewHBox(layout.NewSpacer(),
 		widget.NewButton("Commit", func() {
 			CommitWithMessagePush(editor.targetDir, editor.entry.Text)
 			window.Close()
 		}),
 		widget.NewButton("Cancel", func() { window.Close() }))
-	content := fyne.NewContainerWithLayout(layout.NewBorderLayout(toolbar, status, nil, nil),
-		toolbar, status, widget.NewScrollContainer(entry))
+
+	content := fyne.NewContainerWithLayout(layout.NewBorderLayout(toolbar, buttonBox, nil, nil),
+		toolbar, buttonBox, widget.NewScrollContainer(entry))
 
 	editor.entry.OnCursorChanged = func() {
 		editor.updateStatus()
@@ -116,9 +118,27 @@ func CommitWithMessagePush(targetDir, message string) {
 	fmt.Println("Current directory", cwd)
 	fmt.Println("Target directory", targetDir)
 
+	message = strings.Replace(message, "\r", "", -1) //Remove windows line endings
+
 	os.Chdir(targetDir)
-	fmt.Printf("%v\n", []string{"git", "commit", "-a"})
-	goof.QCI([]string{"git", "commit", "-a", "-m", message})
-	goof.QCI([]string{"git", "push"})
+	messageLines := strings.Split(message, "\n")
+	//Searches a list of strings, return any that match search.  Case insensitive
+
+	var compactMessages = []string{}
+	for _, v := range messageLines {
+		if len(v) > 0 && v[0] != '#' {
+			compactMessages = append(compactMessages, v)
+		}
+	}
+
+	if len(compactMessages) > 0 {
+		mess := strings.Join(compactMessages, "\n")
+		fmt.Printf("%v\n", []string{"git", "commit", "-a"})
+		goof.QCI([]string{"git", "commit", "-a", "-m", mess})
+		goof.QCI([]string{"git", "push"})
+		fmt.Println("Commit message:", mess)
+	} else {
+		fmt.Println("Not committing, due to empty message")
+	}
 	os.Chdir(cwd)
 }
