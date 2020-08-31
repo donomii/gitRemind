@@ -33,7 +33,7 @@ func DialogScreen(win fyne.Window, a fyne.App, repos [][]string) fyne.CanvasObje
 
 	//form := &widget.Form{}
 	//form.Append("Message", largeText)
-	diffs := widget.NewGroupWithScroller("Diff", largeText)
+	diffs := widget.NewGroupWithScroller("Status", largeText)
 	middle := diffs
 
 	borderLayout := layout.NewBorderLayout(top, bottom, left, right)
@@ -55,7 +55,7 @@ func DialogScreen(win fyne.Window, a fyne.App, repos [][]string) fyne.CanvasObje
 	for _, r := range repos {
 		name := r[0]
 		path := r[0]
-		detailDisplay := "Conditions\n-----\n" + r[4] + "\n\nFiles\n-----\n" + r[1] + "\nDiff\n----\n" + r[2]
+		detailDisplay := "Problems\n-----\n" + r[4] + "\n\nFiles\n-----\n" + r[1] + "\nDiff\n----\n" + r[2]
 		detailDisplay = strings.Replace(detailDisplay, "\t", "   ", -1)
 		commitMessage = "\n#" + strings.Replace(r[5], "\n", "\n#", -1)
 		b := widget.NewButton(name, func() {
