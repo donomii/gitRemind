@@ -161,3 +161,7 @@ func CommitWithMessagePush(targetDir, message string) {
 	}
 	os.Chdir(cwd)
 }
+
+func RemoveRepo(repo string) {
+	delete(Repos, repo)
+}

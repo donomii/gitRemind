@@ -31,7 +31,7 @@ var disable = flag.Bool("disable", false, "disable all widgets")
 
 func main() {
 	flag.Parse()
-	gitremind.DoScan("../../", false, false)
+	go gitremind.DoScan("../../", false, false)
 	ic, err := widget.NewIcon(icons.ContentAdd)
 	if err != nil {
 		log.Fatal(err)
@@ -260,6 +260,8 @@ func commitWindow(gtx layout.Context, th *material.Theme) layout.Dimensions {
 					fmt.Println("Clicked commit")
 					fmt.Println(editor.Text())
 					gitremind.CommitWithMessagePush(committingDir, editor.Text())
+					delete(buttons, committingDir)
+					gitremind.RemoveRepo(committingDir)
 					mode = "directories"
 				}
 
