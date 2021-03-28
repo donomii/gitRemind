@@ -174,7 +174,7 @@ func kitchen(gtx layout.Context, th *material.Theme) layout.Dimensions {
 
 						longText = "Problems with " + s[0] + ":" + s[3] + s[2] + "\n" + s[1] + "\n\n"
 						editor.SetText(longText)
-						committingDir = file
+						committingDir = s[0]
 					}
 
 					dims := material.Button(th, buttons[file], s[0]+" ("+s[3]+")").Layout(gtx)
@@ -199,8 +199,14 @@ func kitchen(gtx layout.Context, th *material.Theme) layout.Dimensions {
 		func(gtx C) D {
 			return in.Layout(gtx, func(gtx C) D {
 				for syncBtn.Clicked() {
+					cwd, _ := os.Getwd()
+					os.Chdir(committingDir)
 					cmd := exec.Command("git", "pull")
 					goof.QuickCommand(cmd)
+					os.Chdir(cwd)
+					gitremind.RemoveRepo(committingDir)
+					gitremind.ScanRepo(committingDir)
+
 				}
 
 				dims := material.Button(th, syncBtn, "Sync").Layout(gtx)
@@ -213,6 +219,7 @@ func kitchen(gtx layout.Context, th *material.Theme) layout.Dimensions {
 				for commitPushBtn.Clicked() {
 					mode = "commit"
 					editor.SetText("")
+
 				}
 
 				dims := material.Button(th, commitPushBtn, "Commit - Push").Layout(gtx)
@@ -267,6 +274,7 @@ func commitWindow(gtx layout.Context, th *material.Theme) layout.Dimensions {
 					delete(buttons, committingDir)
 					gitremind.RemoveRepo(committingDir)
 					mode = "directories"
+					gitremind.ScanRepo(committingDir)
 				}
 
 				dims := material.Button(th, commitBtn, "Commit").Layout(gtx)

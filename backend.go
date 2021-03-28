@@ -8,23 +8,25 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 
 	"github.com/donomii/goof"
 )
 
 var workerChan chan string
-var doneChan chan bool
+var wg sync.WaitGroup
 
 var Repos map[string][]string
 
 func DoScan(scanDir string, verbose bool, autoSync bool) {
 	log.Println("Starting scan")
 	workerChan = make(chan string, 10)
-	doneChan = make(chan bool)
+	//	doneChan = make(chan bool)
 	go worker(workerChan, verbose, autoSync)
 	scanRepos(scanDir, workerChan)
-	<-doneChan
-	close(doneChan)
+	wg.Wait()
+	//<-doneChan
+	//close(doneChan)
 
 	log.Println("Scan complete!")
 }
@@ -35,7 +37,7 @@ func scanRepos(scanDir string, c chan string) {
 		//fmt.Println(path)
 
 		if !git_regex.MatchString(path) {
-
+			wg.Add(1)
 			c <- path
 
 		}
@@ -43,7 +45,7 @@ func scanRepos(scanDir string, c chan string) {
 	}
 	//fmt.Println("These repositories need some attention:")
 	filepath.Walk(scanDir, walkHandler)
-	close(c)
+	//close(c)
 }
 
 func grep(str string) string {
@@ -129,8 +131,9 @@ func worker(c chan string, verbose bool, autoSync bool) {
 			}
 		}
 		os.Chdir(cwd)
+		wg.Done()
 	}
-	doneChan <- true
+
 }
 
 func CommitWithMessagePush(targetDir, message string) {
@@ -165,4 +168,9 @@ func CommitWithMessagePush(targetDir, message string) {
 
 func RemoveRepo(repo string) {
 	delete(Repos, repo)
+}
+
+func ScanRepo(path string) {
+	wg.Add(1)
+	workerChan <- path
 }
