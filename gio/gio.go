@@ -174,10 +174,11 @@ func kitchen(gtx layout.Context, th *material.Theme) layout.Dimensions {
 
 						longText = "Problems with " + s[0] + ":" + s[3] + s[2] + "\n" + s[1] + "\n\n"
 						editor.SetText(longText)
-						committingDir = s[0]
+						committingDir = file
 					}
 
-					dims := material.Button(th, buttons[file], s[0]+" ("+s[3]+")").Layout(gtx)
+					pth := goof.SplitPath(file)
+					dims := material.Button(th, buttons[file], pth[len(pth)-1]+" ("+s[3]+")").Layout(gtx)
 					pointer.CursorNameOp{Name: pointer.CursorPointer}.Add(gtx.Ops)
 					return dims
 				})

@@ -111,11 +111,11 @@ func worker(c chan string, verbose bool, autoSync bool) {
 			}
 			if len(reasons) > 0 {
 				fmt.Printf("%v: %v\n", path, strings.Join(longreasons, ", "))
-				fullPath := fmt.Sprintf("%v/%v", cwd, path)
+				//fullPath := fmt.Sprintf("%v/%v", cwd, path)
 				if Repos == nil {
 					Repos = map[string][]string{}
 				}
-				Repos[fullPath] = []string{path, shortresult, grep(diffresult), strings.Join(reasons, ", "), strings.Join(longreasons, ", "), result}
+				Repos[path] = []string{path, shortresult, grep(diffresult), strings.Join(reasons, ", "), strings.Join(longreasons, ", "), result}
 				if verbose {
 					fmt.Println(result)
 					fmt.Printf("\n\n\n\n\n")
