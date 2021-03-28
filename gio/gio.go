@@ -207,7 +207,7 @@ func kitchen(gtx layout.Context, th *material.Theme) layout.Dimensions {
 					os.Chdir(cwd)
 					gitremind.RemoveRepo(committingDir)
 					gitremind.ScanRepo(committingDir)
-
+					longText = ""
 				}
 
 				dims := material.Button(th, syncBtn, "Sync").Layout(gtx)
@@ -254,7 +254,7 @@ func kitchen(gtx layout.Context, th *material.Theme) layout.Dimensions {
 
 func commitWindow(gtx layout.Context, th *material.Theme) layout.Dimensions {
 	in := layout.UniformInset(unit.Dp(8))
-	widgets2 := []layout.Widget{material.H3(th, "Details").Layout}
+	widgets2 := []layout.Widget{material.H3(th, "Commit Message").Layout}
 	//	files := goof.LslR(".")
 
 	widgets2 = append(widgets2,
@@ -275,7 +275,9 @@ func commitWindow(gtx layout.Context, th *material.Theme) layout.Dimensions {
 					delete(buttons, committingDir)
 					gitremind.RemoveRepo(committingDir)
 					mode = "directories"
+					longText = ""
 					gitremind.ScanRepo(committingDir)
+
 				}
 
 				dims := material.Button(th, commitBtn, "Commit").Layout(gtx)
