@@ -77,6 +77,7 @@ func worker(c chan string, verbose bool, autoSync bool) {
 			}
 			os.Chdir(path)
 			cmd := exec.Command("git", "fetch")
+			goof.QuickCommand(cmd)
 			cmd = exec.Command("git", "status")
 			result := goof.QuickCommand(cmd)
 			cmd = exec.Command("git", "status", "--porcelain")
