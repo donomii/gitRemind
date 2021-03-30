@@ -19,7 +19,7 @@ var wg sync.WaitGroup
 var Repos map[string][]string
 
 func DoScan(scanDir string, verbose bool, autoSync bool) {
-	log.Println("Starting scan")
+	log.Println("Starting scan:", scanDir)
 	workerChan = make(chan string, 10)
 	//	doneChan = make(chan bool)
 	go worker(workerChan, verbose, autoSync)

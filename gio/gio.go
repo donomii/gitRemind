@@ -29,12 +29,13 @@ import (
 	"golang.org/x/exp/shiny/materialdesign/icons"
 )
 
+var path = flag.String("path", ".", "directory to recursively scan")
 var screenshot = flag.String("screenshot", "", "save a screenshot to a file and exit")
 var disable = flag.Bool("disable", false, "disable all widgets")
 
 func main() {
 	flag.Parse()
-	go gitremind.DoScan("../../", false, false)
+	go gitremind.DoScan(*path, false, false)
 	ic, err := widget.NewIcon(icons.ContentAdd)
 	if err != nil {
 		log.Fatal(err)
