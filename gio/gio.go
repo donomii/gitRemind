@@ -203,7 +203,11 @@ func kitchen(gtx layout.Context, th *material.Theme) layout.Dimensions {
 				for syncBtn.Clicked() {
 					cwd, _ := os.Getwd()
 					os.Chdir(committingDir)
-					cmd := exec.Command("git", "pull")
+					cmd := exec.Command("git", "push")
+					goof.QuickCommand(cmd)
+					cmd = exec.Command("git", "pull")
+					goof.QuickCommand(cmd)
+					cmd = exec.Command("git", "push")
 					goof.QuickCommand(cmd)
 					os.Chdir(cwd)
 					gitremind.RemoveRepo(committingDir)

@@ -128,6 +128,8 @@ func worker(c chan string, verbose bool, autoSync bool) {
 				goof.QuickCommand(cmd)
 				cmd = exec.Command("git", "pull")
 				goof.QuickCommand(cmd)
+				cmd = exec.Command("git", "push")
+				goof.QuickCommand(cmd)
 			}
 		}
 		os.Chdir(cwd)
