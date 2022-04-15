@@ -75,11 +75,11 @@ func worker(c chan string) {
 			os.Chdir(path)
 			cmd := exec.Command("git", "fetch")
 			cmd = exec.Command("git", "status")
-			result := goof.QuickCommand(cmd)
+			result,_ := goof.QuickCommand(cmd)
 			cmd = exec.Command("git", "status", "--porcelain")
-			shortresult := goof.QuickCommand(cmd)
+			shortresult, _ := goof.QuickCommand(cmd)
 			cmd = exec.Command("git", "diff", "--ignore-blank-lines")
-			diffresult := goof.QuickCommand(cmd)
+			diffresult, _ := goof.QuickCommand(cmd)
 			reasons := []string{}
 			longreasons := []string{}
 
