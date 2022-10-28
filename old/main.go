@@ -12,24 +12,14 @@ import (
 	"strings"
 
 	"github.com/donomii/goof"
-	"github.com/go-gl/glfw/v3.2/glfw"
-	"github.com/golang-ui/nuklear/nk"
-	"github.com/rivo/tview"
-	"github.com/xlab/closer"
-
-	"golang.org/x/mobile/gl"
 )
 
-var glctx gl.Context
 var targetDir string
 var detailDisplay string = "Detail Disply Inital Value"
 var autoSync bool
-var ui bool
-var gui bool
 var verbose bool
 var repos [][]string
 var lastSelect string
-var app *tview.Application
 var workerChan chan string
 var doneChan chan bool
 
@@ -39,19 +29,10 @@ var winHeight = 900
 type Option uint8
 
 type State struct {
-	bgColor nk.Color
 	prop    int32
 	opt     Option
 }
 
-/*
-func load_nk_image(data []uint8, w, h int) nk.Image {
-	log.Println("Uploading...")
-	tex := glim.UploadNewTex(glctx, data, w, h)
-	log.Println("upnt complete")
-	return nk.NkImageId(int32(tex.Value))
-}
-*/
 
 func worker(c chan string) {
 	var ahead_regex = regexp.MustCompile(`Your branch is ahead of`)
@@ -181,49 +162,15 @@ func doScan() {
 	log.Println("Scan complete!")
 }
 
-func withGlctx(f func()) {
-	var worker gl.Worker
-	glctx, worker = gl.NewContext()
-	workAvailable := worker.WorkAvailable()
-	done := make(chan bool)
-	go func() {
-		f()
-		done <- true
-	}()
-	for {
-		select {
-		case <-workAvailable:
-			worker.DoWork()
-		case <-done:
-			return
-		}
-	}
-}
-
 func main() {
 	runtime.GOMAXPROCS(1)
 	runtime.LockOSThread()
-	if err := glfw.Init(); err != nil {
-		closer.Fatalln(err)
-	}
 	flag.BoolVar(&autoSync, "auto-sync", false, "Automatically push then pull on clean repositories")
-	flag.BoolVar(&ui, "ui", false, "Experimental graphical user interface")
-	flag.BoolVar(&gui, "gui", false, "Experimental graphical user interface")
 	flag.BoolVar(&verbose, "verbose", false, "Print details while working")
 	flag.Parse()
 
 	doScan()
 
-	if ui {
-		doui()
-	}
-	if gui {
-
-		startNuke()
-	}
 	fmt.Println("Done!")
 }
 
-func QuickFileEditor(ctx *nk.Context) {
-
-}
