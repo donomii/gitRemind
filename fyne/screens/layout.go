@@ -3,10 +3,11 @@ package screens
 import (
 	"image/color"
 
-	"fyne.io/fyne"
-	"fyne.io/fyne/canvas"
-	"fyne.io/fyne/layout"
-	"fyne.io/fyne/widget"
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/widget"
 )
 
 func makeCell() fyne.CanvasObject {
@@ -22,9 +23,7 @@ func makeBorderLayout() *fyne.Container {
 	right := makeCell()
 	middle := widget.NewLabelWithStyle("BorderLayout", fyne.TextAlignCenter, fyne.TextStyle{})
 
-	borderLayout := layout.NewBorderLayout(top, bottom, left, right)
-	return fyne.NewContainerWithLayout(borderLayout,
-		top, bottom, left, right, middle)
+	return container.NewBorder(top, bottom, left, right, middle)
 }
 
 func makeBoxLayout() *fyne.Container {
@@ -34,11 +33,9 @@ func makeBoxLayout() *fyne.Container {
 	center := makeCell()
 	right := makeCell()
 
-	col := fyne.NewContainerWithLayout(layout.NewVBoxLayout(),
-		top, middle, bottom)
+	col := container.NewVBox(top, middle, bottom)
 
-	return fyne.NewContainerWithLayout(layout.NewHBoxLayout(),
-		col, center, right)
+	return container.NewHBox(col, center, right)
 }
 
 func makeFixedGridLayout() *fyne.Container {
@@ -47,7 +44,7 @@ func makeFixedGridLayout() *fyne.Container {
 	box3 := makeCell()
 	box4 := makeCell()
 
-	return fyne.NewContainerWithLayout(layout.NewFixedGridLayout(fyne.NewSize(75, 75)),
+	return container.New(layout.NewGridWrapLayout(fyne.NewSize(75, 75)),
 		box1, box2, box3, box4)
 }
 
@@ -57,16 +54,16 @@ func makeGridLayout() *fyne.Container {
 	box3 := makeCell()
 	box4 := makeCell()
 
-	return fyne.NewContainerWithLayout(layout.NewGridLayout(2),
+	return container.NewGridWithColumns(2,
 		box1, box2, box3, box4)
 }
 
 // LayoutPanel loads a panel that shows the layouts available for a container
 func LayoutPanel() fyne.CanvasObject {
-	return widget.NewTabContainer(
-		widget.NewTabItem("Border", makeBorderLayout()),
-		widget.NewTabItem("Box", makeBoxLayout()),
-		widget.NewTabItem("Fixed Grid", makeFixedGridLayout()),
-		widget.NewTabItem("Grid", makeGridLayout()),
+	return container.NewAppTabs(
+		container.NewTabItem("Border", makeBorderLayout()),
+		container.NewTabItem("Box", makeBoxLayout()),
+		container.NewTabItem("Fixed Grid", makeFixedGridLayout()),
+		container.NewTabItem("Grid", makeGridLayout()),
 	)
 }
