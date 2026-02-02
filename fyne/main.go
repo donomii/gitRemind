@@ -6,13 +6,14 @@ import (
 	"fmt"
 	"net/url"
 
-	"fyne.io/fyne"
-	"fyne.io/fyne/app"
-	"fyne.io/fyne/canvas"
-	"fyne.io/fyne/cmd/fyne_demo/data"
-	"fyne.io/fyne/layout"
-	"fyne.io/fyne/theme"
-	"fyne.io/fyne/widget"
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/theme"
+	"fyne.io/fyne/v2/widget"
+	"github.com/donomii/gitremind"
 	"github.com/donomii/gitremind/fyne/screens"
 )
 
@@ -24,7 +25,7 @@ var gui bool
 var scanDir string = "."
 
 func welcomeScreen(a fyne.App) fyne.CanvasObject {
-	logo := canvas.NewImageFromResource(data.FyneScene)
+	logo := canvas.NewImageFromResource(theme.FyneLogo())
 	logo.SetMinSize(fyne.NewSize(800, 600))
 
 	link, err := url.Parse("https://fyne.io/")
@@ -32,15 +33,15 @@ func welcomeScreen(a fyne.App) fyne.CanvasObject {
 		fyne.LogError("Could not parse URL", err)
 	}
 
-	return widget.NewVBox(
+	return container.NewVBox(
 		widget.NewLabelWithStyle("Welcome to the Fyne toolkit demo app", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
 		layout.NewSpacer(),
-		widget.NewHBox(layout.NewSpacer(), logo, layout.NewSpacer()),
+		container.NewHBox(layout.NewSpacer(), logo, layout.NewSpacer()),
 		widget.NewHyperlinkWithStyle("fyne.io", link, fyne.TextAlignCenter, fyne.TextStyle{}),
 		layout.NewSpacer(),
 
-		widget.NewGroup("Theme",
-			fyne.NewContainerWithLayout(layout.NewGridLayout(2),
+		widget.NewCard("Theme", "",
+			container.NewGridWithColumns(2,
 				widget.NewButton("Dark", func() {
 					a.Settings().SetTheme(theme.DarkTheme())
 				}),
@@ -61,15 +62,18 @@ func main() {
 	if len(flag.Args()) > 0 {
 		scanDir = flag.Arg(0)
 	}
-	doScan()
-	if gui {
 
-		doGui()
+	//repos := doScan()
+	g := gitremind.NewGitRemind()
+	g.Scan(scanDir, verbose, autoSync)
+
+	if gui {
+		doGui(g)
 	}
 
 }
 
-func doGui() {
+func doGui(g *gitremind.GitRemind) {
 	a := app.NewWithID("com.praeceptamachinae.com")
 	a.SetIcon(theme.FyneLogo())
 
@@ -84,9 +88,9 @@ func doGui() {
 	)))
 	w.SetMaster()
 
-	tabs := widget.NewTabContainer(
-		widget.NewTabItemWithIcon("Repos", theme.ViewFullScreenIcon(), screens.DialogScreen(w, a, repos)))
-	tabs.SetTabLocation(widget.TabLocationLeading)
+	tabs := container.NewAppTabs(
+		container.NewTabItemWithIcon("Repos", theme.ViewFullScreenIcon(), screens.DialogScreen(w, a, g)))
+	tabs.SetTabLocation(container.TabLocationLeading)
 	tabs.SelectTabIndex(a.Preferences().Int(preferenceCurrentTab))
 	w.SetContent(tabs)
 	w.Resize(fyne.NewSize(800, 600))
