@@ -5,12 +5,11 @@ import (
 
 	"github.com/donomii/gitremind"
 
-	"fyne.io/fyne"
-	"fyne.io/fyne/layout"
-	"fyne.io/fyne/theme"
-	"fyne.io/fyne/widget"
-
-	"github.com/fyne-io/examples/img/icon"
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/theme"
+	"fyne.io/fyne/v2/widget"
 )
 
 type textEdit struct {
@@ -61,9 +60,9 @@ func (e *textEdit) buildToolbar() *widget.Toolbar {
 }
 
 // Show loads a new text editor for the user to type a commit message into
-func Show(app fyne.App, targetDir string) *textEdit {
+func Show(app fyne.App, targetDir string, onSuccess func()) *textEdit {
 	window := app.NewWindow("Commit Message")
-	window.SetIcon(icon.TextEditorBitmap)
+	//window.SetIcon(icon.TextEditorBitmap)
 
 	entry := widget.NewMultiLineEntry()
 	cursorRow := widget.NewLabel("1")
@@ -78,15 +77,33 @@ func Show(app fyne.App, targetDir string) *textEdit {
 	}
 
 	toolbar := editor.buildToolbar()
-	buttonBox := widget.NewHBox(layout.NewSpacer(),
-		widget.NewButton("Commit", func() {
+
+	// Create commit button separately to reference it for disabling
+	var commitBtn *widget.Button
+	commitBtn = widget.NewButton("Commit", func() {
+		commitBtn.Disable()
+		commitBtn.SetText("Working...")
+
+		go func() {
 			gitremind.CommitWithMessagePush(editor.targetDir, editor.entry.Text)
+			if onSuccess != nil {
+				onSuccess()
+			}
 			window.Close()
-		}),
+		}()
+	})
+
+	buttonBox := container.NewHBox(layout.NewSpacer(),
+		commitBtn,
 		widget.NewButton("Cancel", func() { window.Close() }))
 
-	content := fyne.NewContainerWithLayout(layout.NewBorderLayout(toolbar, buttonBox, nil, nil),
-		toolbar, buttonBox, widget.NewScrollContainer(entry))
+	content := container.NewBorder(toolbar, buttonBox, nil, nil,
+		widget.NewMultiLineEntry())
+	// Note: The original code used widget.NewScrollContainer(entry) but MultiLineEntry wraps itself now
+	// However, keeping consistent structure:
+
+	scroll := container.NewScroll(entry)
+	content = container.NewBorder(toolbar, buttonBox, nil, nil, scroll)
 
 	editor.entry.OnCursorChanged = func() {
 		editor.updateStatus()
@@ -108,5 +125,9 @@ func Show(app fyne.App, targetDir string) *textEdit {
 	window.SetContent(content)
 	window.Resize(fyne.NewSize(480, 320))
 	window.Show()
+
+	// Focus the entry
+	window.Canvas().Focus(entry)
+
 	return editor
 }
