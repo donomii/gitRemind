@@ -10,6 +10,9 @@ import (
 	//"fyne.io/fyne/dialog"
 	"os"
 
+	"image/color"
+
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/widget"
 	"github.com/donomii/gitremind"
 	"github.com/donomii/gitremind/fyne/textedit"
@@ -21,6 +24,13 @@ var targetDir string
 
 func confirmCallback(response bool) {
 	fmt.Println("Responded with", response)
+}
+
+func biggerButton(label string, tapped func()) fyne.CanvasObject {
+	b := widget.NewButton(label, tapped)
+	rect := canvas.NewRectangle(color.Transparent)
+	rect.SetMinSize(fyne.NewSize(0, 60)) // Increase to 60 height
+	return container.NewStack(rect, container.NewPadded(b))
 }
 
 // DialogScreen loads a panel that lists the dialog windows that can be tested.
@@ -38,14 +48,14 @@ func DialogScreen(win fyne.Window, a fyne.App, g *gitremind.GitRemind) fyne.Canv
 	diffs := container.NewScroll(largeText)
 	middle := diffs
 
-	pull_Button := widget.NewButton("Pull", func() {
+	pull_Button := biggerButton("Pull", func() {
 		Pull(targetDir)
 	})
 
 	// Placeholder for refresh function
 	var refreshRepoList func()
 
-	commit_Push_Button := widget.NewButton("Commit - Push", func() {
+	commit_Push_Button := biggerButton("Commit - Push", func() {
 		editor := textedit.Show(a, targetDir, func() {
 			// Callback after commit
 			fmt.Println("Commit done, refreshing...")
@@ -63,6 +73,8 @@ func DialogScreen(win fyne.Window, a fyne.App, g *gitremind.GitRemind) fyne.Canv
 	})
 
 	gitControls := widget.NewCard("Actions", "", container.NewHBox(pull_Button, commit_Push_Button))
+	gitControlsWrapper := container.NewVBox(gitControls)
+	gitControlsWrapper.Hide()
 	diffCon := container.NewBorder(top, bottom, left, right, middle)
 
 	repoList := container.NewVBox()
@@ -98,9 +110,10 @@ func DialogScreen(win fyne.Window, a fyne.App, g *gitremind.GitRemind) fyne.Canv
 			detailDisplay := "Problems\n-----\n" + r[4] + "\n\nFiles\n-----\n" + r[1] + "\nDiff\n----\n" + r[2]
 			detailDisplay = strings.Replace(detailDisplay, "\t", "   ", -1)
 			commitMessage = "\n#" + strings.Replace(r[5], "\n", "\n#", -1)
-			b := widget.NewButton(name, func() {
+			b := biggerButton(name, func() {
 				largeText.SetText(detailDisplay)
 				targetDir = path
+				gitControlsWrapper.Show()
 			})
 			buttons = append(buttons, b)
 		}
@@ -118,7 +131,7 @@ func DialogScreen(win fyne.Window, a fyne.App, g *gitremind.GitRemind) fyne.Canv
 	split.SetOffset(0.3) // Give 30% to the list by default
 
 	// Main layout: Top Controls, Center Split
-	return container.NewBorder(gitControls, nil, nil, nil, split)
+	return container.NewBorder(gitControlsWrapper, nil, nil, nil, split)
 }
 
 func CommitPush(targetDir string) {

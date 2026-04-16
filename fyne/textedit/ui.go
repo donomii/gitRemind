@@ -5,7 +5,10 @@ import (
 
 	"github.com/donomii/gitremind"
 
+	"image/color"
+
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
@@ -22,6 +25,13 @@ type textEdit struct {
 func (e *textEdit) updateStatus() {
 	e.cursorRow.SetText(fmt.Sprintf("%d", e.entry.CursorRow+1))
 	e.cursorCol.SetText(fmt.Sprintf("%d", e.entry.CursorColumn+1))
+}
+
+func biggerButton(label string, tapped func()) (*widget.Button, fyne.CanvasObject) {
+	b := widget.NewButton(label, tapped)
+	rect := canvas.NewRectangle(color.Transparent)
+	rect.SetMinSize(fyne.NewSize(0, 60)) // Increase to 60 height
+	return b, container.NewStack(rect, container.NewPadded(b))
 }
 
 func (e *textEdit) cut() {
@@ -80,7 +90,8 @@ func Show(app fyne.App, targetDir string, onSuccess func()) *textEdit {
 
 	// Create commit button separately to reference it for disabling
 	var commitBtn *widget.Button
-	commitBtn = widget.NewButton("Commit", func() {
+	var commitWrapper fyne.CanvasObject
+	commitBtn, commitWrapper = biggerButton("Commit", func() {
 		commitBtn.Disable()
 		commitBtn.SetText("Working...")
 
@@ -93,9 +104,11 @@ func Show(app fyne.App, targetDir string, onSuccess func()) *textEdit {
 		}()
 	})
 
+	_, cancelWrapper := biggerButton("Cancel", func() { window.Close() })
+
 	buttonBox := container.NewHBox(layout.NewSpacer(),
-		commitBtn,
-		widget.NewButton("Cancel", func() { window.Close() }))
+		commitWrapper,
+		cancelWrapper)
 
 	content := container.NewBorder(toolbar, buttonBox, nil, nil,
 		widget.NewMultiLineEntry())

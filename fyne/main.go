@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/url"
 
+	"image/color"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/canvas"
@@ -23,6 +25,13 @@ var verbose bool
 var autoSync bool
 var gui bool
 var scanDir string = "."
+
+func biggerButton(label string, tapped func()) fyne.CanvasObject {
+	b := widget.NewButton(label, tapped)
+	rect := canvas.NewRectangle(color.Transparent)
+	rect.SetMinSize(fyne.NewSize(0, 60))
+	return container.NewStack(rect, container.NewPadded(b))
+}
 
 func welcomeScreen(a fyne.App) fyne.CanvasObject {
 	logo := canvas.NewImageFromResource(theme.FyneLogo())
@@ -42,10 +51,10 @@ func welcomeScreen(a fyne.App) fyne.CanvasObject {
 
 		widget.NewCard("Theme", "",
 			container.NewGridWithColumns(2,
-				widget.NewButton("Dark", func() {
+				biggerButton("Dark", func() {
 					a.Settings().SetTheme(theme.DarkTheme())
 				}),
-				widget.NewButton("Light", func() {
+				biggerButton("Light", func() {
 					a.Settings().SetTheme(theme.LightTheme())
 				}),
 			),
